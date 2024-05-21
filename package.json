@@ -1,6 +1,22 @@
 {
-  "name": "vortex",
-  "type": "module",
+  "name": "@westacks/vortex",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Server-based routing for SPAs",
+  "author": "Dmytro Morozov <puny.flash@gmail.com>",
+  "homepage": "https://westacks.github.io/vortex/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/westacks/vortex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/westacks/vortex/issues"
+  },
+  "keywords": [
+    "spa",
+    "routing",
+    "vortex"
+  ],
   "scripts": {
     "build": "vite build",
     "prepublishOnly": "npm run build",
@@ -22,6 +38,7 @@
   "files": [
     "dist"
   ],
+  "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
