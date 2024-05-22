@@ -4,22 +4,24 @@ layout: home
 
 hero:
   name: "Vortex"
-  text: "Server-based routing for SPA"
-  tagline: My great project tagline
+  text: "Server-side routing for SPA"
+  tagline: Low-level API, High-level Efficiency
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: Learn More
+      link: /introduction
     - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: Examples
+      link: /examples
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: Truly Framework-Agnostic
+    details: Works seamlessly with any front-end framework.
+
+  - title: SSR support
+    details: Provides simple API to pre-render pages on the server.
+
+  - title: Low-Level API Access
+    details: Offers full control and customization of your application.
 ---
 

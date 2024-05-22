@@ -1,3 +1,3 @@
 export * from "./client";
 export * from "./page";
-export { axios } from "./router";
+export { axios, extend, type VortexExtension } from "./router";

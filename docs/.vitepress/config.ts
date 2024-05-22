@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -13,17 +14,31 @@ export default defineConfig({
         ],
 
         sidebar: [
+            { text: 'Introduction', link: '/introduction', },
             {
-                text: 'Examples',
+                text: 'Installation',
                 items: [
-                    { text: 'Markdown Examples', link: '/markdown-examples' },
-                    { text: 'Runtime API Examples', link: '/api-examples' }
+                    { text: 'Server', link: '/installation/server' },
+                    { text: 'Client', link: '/installation/client' },
+                ]
+            },
+            {
+                text: 'Usage',
+                items: [
+                    { text: 'Navigation', link: '/usage/navigation' },
+                    { text: 'Extensions API', link: '/usage/extensions' },
                 ]
             }
         ],
 
         socialLinks: [
-            { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
+            { icon: 'github', link: 'https://github.com/westacks/vortex' }
         ]
+    },
+    markdown: {
+        config(md) {
+            // @ts-ignore
+            md.use(tabsMarkdownPlugin)
+        }
     }
 })

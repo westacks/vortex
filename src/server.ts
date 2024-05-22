@@ -3,20 +3,12 @@ import { argv, stdout, exit } from 'node:process'
 import { getPage, setPage, type Page } from './page'
 
 /**
- * Prerendered page instance
- */
-export type SsrResponse = {
-    head: string[] | string,
-    body: string[] | string,
-}
-
-/**
  * Initializes a Vortex server renderer
  *
  * @param renderer A function that returns a prerendered page instance
  * @param port The port to listen on SSR server (in server mode)
  */
-export function createVortexServer(renderer: (page: Page) => (SsrResponse | Promise<SsrResponse>), port: number = 13714) {
+export function createVortexServer<T>(renderer: (page: Page) => (T | Promise<T>), port: number = 13714) {
     if (argv.length >= 3) {
         return createCli(renderer)
     }
@@ -27,11 +19,11 @@ export function createVortexServer(renderer: (page: Page) => (SsrResponse | Prom
 const read = (message: IncomingMessage): Promise<string> => new Promise((resolve, reject) => {
     let data = ''
     message.on('data', (chunk) => (data += chunk))
-    message.on('end', () => resolve(data))
+    message.on('end', () => resolve(data + '\n'))
     message.on('error', reject)
 })
 
-async function createCli(renderer: (page: Page) => (SsrResponse | Promise<SsrResponse>)) {
+async function createCli<T>(renderer: (page: Page) => (T | Promise<T>)) {
     try {
         const page = JSON.parse(argv[2] ?? 'null')
 
@@ -46,7 +38,7 @@ async function createCli(renderer: (page: Page) => (SsrResponse | Promise<SsrRes
     }
 }
 
-async function createSrv(renderer: (page: Page) => (SsrResponse | Promise<SsrResponse>), port: number = 13714) {
+async function createSrv<T>(renderer: (page: Page) => (T | Promise<T>), port: number = 13714) {
     const routes: Record<string, (req: IncomingMessage) => Promise<unknown> | unknown> = {
         '/up': () => ({status: 'OK', timestamp: Date.now()}),
         '/down': () => exit(),
