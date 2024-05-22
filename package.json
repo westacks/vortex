@@ -1,6 +1,6 @@
 {
   "name": "@westacks/vortex",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "license": "MIT",
   "description": "Server-based routing for SPAs",
   "author": "Dmytro Morozov <puny.flash@gmail.com>",
@@ -19,7 +19,6 @@
   ],
   "scripts": {
     "build": "vite build",
-    "prepublishOnly": "npm run build",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
