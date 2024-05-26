@@ -2,7 +2,7 @@
 import { setPage, type Page } from "./page";
 import { createRouter, destroyRouter } from "./router";
 
-type VortexDestructor<T> = (callback?: (app: Awaited<T>) => void) => void;
+type VortexDestructor = void | (() => void) | Promise<void | (() => void)>;
 
 /**
  * Initialize Vortex client.
@@ -12,7 +12,7 @@ type VortexDestructor<T> = (callback?: (app: Awaited<T>) => void) => void;
  * @param element Root element. Defaults to `#app`
  * @returns Destructor function
  */
-export async function createVortex<T>(setup: (el: HTMLElement, page: Page, hydrate: boolean) => T, element: string|HTMLElement = "#app"): Promise<VortexDestructor<T>> {
+export async function createVortex(setup: (el: HTMLElement, page: Page, hydrate: boolean) => VortexDestructor, element: string|HTMLElement = "#app") {
     if (typeof element === 'string') {
         element = document.querySelector(element) as HTMLElement;
     }
@@ -26,10 +26,10 @@ export async function createVortex<T>(setup: (el: HTMLElement, page: Page, hydra
     setPage(page);
     createRouter();
 
-    const app = await setup(element, page, !!element.dataset?.ssr);
+    const dispose = await setup(element, page, !!element.dataset?.ssr);
 
-    return (callback) => {
-        callback instanceof Function && callback(app);
+    return () => {
+        dispose && dispose();
         destroyRouter();
     }
 }

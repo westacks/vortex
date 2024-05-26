@@ -1,6 +1,6 @@
 {
   "name": "@westacks/vortex",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "license": "MIT",
   "description": "Server-based routing for SPAs",
   "author": "Dmytro Morozov <puny.flash@gmail.com>",
