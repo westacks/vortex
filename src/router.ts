@@ -36,8 +36,9 @@ interface RouterDefaults<D = any> extends Omit<RouterRequestConfig<D>, 'headers'
     headers: HeadersDefaults;
 }
 
-type VortexConfig = {
+export type VortexConfig = {
     preserve?: boolean
+    only?: string[]
 }
 
 interface RouterRequestConfig<D = any> extends AxiosRequestConfig<D> {
@@ -99,48 +100,6 @@ export function createRouter() {
     window.addEventListener("popstate", popstate)
 
     axios.defaults.vortex = true
-
-    extend(({ request, response }) => ({
-        request: request.use(function (request) {
-            if (!request.vortex) {
-                return request
-            }
-
-            request.headers["x-vortex"] = true
-            request.headers["x-vortex-version"] = page()?.version
-            request.headers["x-vortex-component"] = page()?.component
-
-            return request
-        }),
-        response: response.use(function (response) {
-            if (!response.config.vortex || !response.headers["x-vortex"]) {
-                return response
-            }
-
-            const config = typeof response.config.vortex === "object" ? response.config.vortex : {}
-
-            setPage(response.data)
-
-            if (config?.preserve || (window.history.state.url === response.data.url && config?.preserve !== false)) {
-                window.history.replaceState(response.data, "", response.data.url)
-            } else {
-                window.history.pushState(response.data, "", response.data.url)
-            }
-
-            return response
-        }, function (error) {
-            if (error.response?.headers["x-vortex-location"]) {
-                window.location.href = error.response.headers["x-vortex-location"];
-                return Promise.resolve(error.response)
-            }
-
-            if (error.response?.headers["x-vortex"]) {
-                return Promise.resolve(error.response)
-            }
-
-            return Promise.reject(error)
-        })
-    }))
 }
 
 export function destroyRouter() {

@@ -1,6 +1,6 @@
 {
   "name": "@westacks/vortex",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "license": "MIT",
   "description": "Server-based routing for SPAs",
   "author": "Dmytro Morozov <puny.flash@gmail.com>",
@@ -52,6 +52,11 @@
       "import": "./dist/server.js",
       "require": "./dist/server.cjs",
       "types": "./dist/server.d.ts"
+    },
+    "./extensions": {
+      "import": "./dist/extensions.js",
+      "require": "./dist/extensions.cjs",
+      "types": "./dist/extensions/index.d.ts"
     }
   }
 }

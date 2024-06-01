@@ -11,6 +11,7 @@ export default defineConfig({
             entry: {
                 "index": resolve(__dirname, 'src/index.ts'),
                 "server": resolve(__dirname, 'src/server.ts'),
+                "extensions": resolve(__dirname, 'src/extensions/index.ts'),
             },
         },
         rollupOptions: {
