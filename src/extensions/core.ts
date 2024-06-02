@@ -1,6 +1,14 @@
 import { getPage as page, setPage } from "../page";
 import type { VortexExtension, VortexConfig } from "../index";
 
+const defaultConfig = {
+    detect: 'x-vortex',
+    version: 'x-vortex-version',
+    component: 'x-vortex-component',
+    location: 'x-vortex-location',
+    only: 'x-vortex-only',
+}
+
 type CoreConfig = {
     detect?: string
     version?: string
@@ -9,13 +17,7 @@ type CoreConfig = {
     only?: string
 }
 
-const core = ({
-    detect = 'x-vortex',
-    version = 'x-vortex-version',
-    component = 'x-vortex-component',
-    location = 'x-vortex-location',
-    only = 'x-vortex-only',
-}: CoreConfig): VortexExtension => ({ request, response }) => ({
+const core = ({detect = defaultConfig.detect, version = defaultConfig.version, component = defaultConfig.component, location = defaultConfig.location, only = defaultConfig.only}: CoreConfig = {}): VortexExtension => ({ request, response }) => ({
     request: request.use(function (request) {
         if (!request.vortex) {
             return request
