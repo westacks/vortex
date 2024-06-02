@@ -72,7 +72,7 @@ const popstate = (event) => {
  * @param extensions Vortex extensions
  * @returns Uninstall function
  */
-export function extend(...extensions: VortexExtension[]): () => void {
+export function install(...extensions: VortexExtension[]): () => void {
     if (!axios) throw new Error("Router not initialized!");
 
     const uninstall = extensions.reduce((acc, x) => {
