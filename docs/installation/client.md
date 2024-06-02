@@ -32,23 +32,47 @@ Next, initialize Vortex client and create your application root:
 
 ::: tabs
 == Svelte
+For Svelte 5, your entry file should have `svelte.js` extension and you will update your root props using `$state` rune:
+
+**_app.svelte.js_**
+```js
+import { createVortex, subscribe, install } from '@westacks/vortex';
+import { core } from '@westacks/vortex/extensions'
+import { props as getProps } from './setup';
+import { mount, hydrate } from 'svelte'
+import App from './App.svelte';
+
+createVortex(async (target, page, ssr) => {
+    const props = $state(await getProps(page))
+    const h = ssr ? hydrate : mount
+
+    h(App, {target, props})
+
+    install(core())
+    subscribe(async (page) => Object.assign(props, await getProps(page)))
+})
+```
+Or in case you use older version of Svelte, you can use legacy class component syntax:
+
 **_app.js_**
 
-Create application root and subscribe to page changes.
 ```js
-import { createVortex, subscribe } from '@westacks/vortex'
+import { createVortex, subscribe, install } from '@westacks/vortex'
+import { core } from '@westacks/vortex/extensions'
 import { props } from './setup'
 import App from './App.svelte'
 
 createVortex(async (target, page, hydrate) => {
     const app = new App({ target, props: await props(page), hydrate })
 
+    install(core())
     subscribe(async (page) => app.$set(await props(page)))
 })
 ```
+You will need to resolve page component, using your bundler's API. We will provide example for Vite as most popular, but code below may differ depending on bundler you are using.
+
 **_setup.js_**
 
-You will need to resolve page component, using your bundler's API. We will provide example for Vite as most popular, but code below may differ depending on bundler you are using.
 ```js
 export const props = async (page) => {
     const pages = import.meta.glob('./pages/**/*.svelte')
@@ -68,7 +92,47 @@ export const props = async (page) => {
 {/if}
 ```
 == Solid
-TODO
+**_app.jsx_**
+
+Create application root and subscribe to page changes.
+```jsx
+import { createVortex, subscribe, install } from '@westacks/vortex';
+import { core } from '@westacks/vortex/extensions';
+import { createSignal } from 'solid-js';
+import { render, hydrate } from 'solid-js/web'
+import { App, props } from './setup';
+
+createVortex(async (target, page, ssr) => {
+    const [getProps, setProps] = createSignal(await props(page))
+    const h = ssr ? hydrate : render
+
+    h(() => <App getProps={getProps}/>, target)
+
+    install(core())
+    subscribe(async (page) => setProps(await props(page)))
+})
+
+```
+**_setup.jsx_**
+
+Here we will define application root and page component resolver. You will need to resolve page component, using your bundler's API. We will provide example for Vite as most popular, but code below may differ depending on bundler you are using.
+```jsx
+import { Dynamic } from "solid-js/web"
+
+export const App = function ({ getProps }) {
+    const component = () => getProps().component
+    const props = () => getProps().props
+
+    return <Dynamic component={component()} {...props()} />
+}
+
+export const props = async (page) => {
+    const pages = import.meta.glob('./pages/**/*.jsx')
+    const component = (await pages[`./pages/${page.component}.jsx`])?.default
+
+    return { component, props: page.props ?? {} }
+}
+```
 == Vue
 TODO
 == React
@@ -87,6 +151,25 @@ Optionally, you can setup bundle for server-side rendering (SSR), which can be u
 
 ::: tabs
 == Svelte
+Svelte 5
+
+**_ssr.js_**
+```js
+import { createVortexServer } from '@westacks/vortex/server'
+import { render } from 'svelte/server'
+import { props } from './setup'
+import App from './App.svelte'
+
+createVortexServer(async (page) => {
+    const {html, head} = render(App, {props: await props(page)})
+
+    // You should return data type, that compatible with your server API
+    return {body: html, head}
+})
+
+```
+Svelte (legacy)
+
 **_ssr.js_**
 ```js
 import { createVortexServer } from '@westacks/vortex/server'
@@ -102,7 +185,21 @@ createVortexServer(async (page) => {
 
 ```
 == Solid
-TODO
+**_ssr.jsx_**
+```jsx
+import { createVortexServer } from '@westacks/vortex/server'
+import { renderToString, generateHydrationScript, getAssets } from 'solid-js/web'
+import { App, props } from './setup'
+
+createVortexServer(async (page) => {
+    const props = await props(page)
+    const body = renderToString(() => <App getProps={() => props} />)
+
+    // You should return data type, that compatible with your server API
+    return {body, head: [getAssets(), generateHydrationScript()]}
+})
+
+```
 == Vue
 TODO
 == React
