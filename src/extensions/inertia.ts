@@ -173,11 +173,14 @@ function renderError(response: AxiosResponse) {
     // render a modal window with rejected response body
     const dialog = document.createElement('dialog')
     dialog.style.position = 'fixed'
+    dialog.style.inset = '0'
+    dialog.style.overflow = 'hidden'
 
     const form = document.createElement('form')
     form.method = 'dialog'
     form.style.position = 'absolute'
     form.style.inset = '0'
+    form.style.zIndex = '-1'
 
     const button = document.createElement('button')
     button.innerText = 'close'
@@ -187,8 +190,8 @@ function renderError(response: AxiosResponse) {
     button.style.opacity = '0'
 
     const iframe = document.createElement('iframe')
-    iframe.style.width = '90vw'
-    iframe.style.height = '90vh'
+    iframe.style.width = '90dvw'
+    iframe.style.height = '90dvh'
     iframe.src = URL.createObjectURL(new Blob([response.data], { type: response.headers['content-type'] }))
 
     form.appendChild(button)

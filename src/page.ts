@@ -1,3 +1,4 @@
+import { isEqual } from "./helpers";
 import { signal, effect } from "./signals";
 
 /**
@@ -13,17 +14,6 @@ export type Page = {
     deferredProps?: Record<string, string[]>
     mergeProps?: string[]
     deepMergeProps?: string[]
-}
-
-/**
- * @see https://lodash.com/docs#isEqual
- */
-function isEqual<T>(x: T, y: T): boolean {
-    const ok = Object.keys, tx = typeof x, ty = typeof y;
-    return x && y && tx === 'object' && tx === ty ? (
-        ok(x).length === ok(y).length &&
-        ok(x).every(key => isEqual(x[key], y[key]))
-    ) : (x === y);
 }
 
 const page = signal<Page>(undefined, isEqual)

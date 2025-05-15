@@ -49,7 +49,7 @@ export interface InternalRouterRequestConfig<D = any> extends InternalAxiosReque
     vortex?: VortexConfig | boolean;
 }
 
-interface RouterResponse<T = any, D = any> extends AxiosResponse<T, D> {
+export interface RouterResponse<T = any, D = any> extends AxiosResponse<T, D> {
     config: InternalRouterRequestConfig<D>
 }
 
