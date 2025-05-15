@@ -1,0 +1,231 @@
+import { axios, getPage, setPage, type VortexExtension, type VortexConfig, type Page } from "../index";
+import type { AxiosError, AxiosResponse } from "axios";
+
+declare module '../index' {
+    interface VortexConfig {
+        only?: string[]
+        except?: string[]
+        reset?: string[]
+        preserveHistory?: boolean
+        preserveScroll?: boolean
+        replaceHistory?: boolean
+    }
+}
+
+/**
+ * Vortex Inertia extension
+ *
+ * @see https://inertiajs.com
+ */
+const inertia = (initialPage: Page): VortexExtension => {
+
+    const afterInstall = (e: CustomEvent<string>) => {
+        if (e.detail === "inertia") {
+            loadDeferredProps(initialPage)
+
+            // @ts-ignore
+            window.removeEventListener("vortex:extension-installed", afterInstall)
+        }
+    }
+
+    if (typeof window !== "undefined") {
+        // @ts-ignore
+        window.addEventListener("vortex:extension-installed", afterInstall)
+    }
+
+    return ({ request, response }) => ({
+        name: "inertia",
+        request: request.use(function (request) {
+            if (!request.vortex) {
+                return request
+            }
+
+            const page = getPage()
+            const config = (typeof request.vortex === "object" ? request.vortex : {}) as VortexConfig
+
+            request.headers['accept'] = 'text/html, application/xhtml+xml, application/json'
+            request.headers['x-inertia'] = true
+            request.headers['x-inertia-version'] = page?.version
+            request.headers['x-inertia-partial-component'] = page?.component
+
+            if (Array.isArray(config.only) && config.only.length > 0) {
+                request.headers['x-inertia-partial-data'] = config.only.join(",")
+            }
+
+            if (Array.isArray(config.except) && config.except.length > 0) {
+                request.headers['x-inertia-partial-except'] = config.except.join(",")
+            }
+
+            if (Array.isArray(config.reset) && config.reset.length > 0) {
+                request.headers['x-inertia-reset'] = config.reset.join(",")
+            }
+
+            return request
+        }),
+        response: response.use(resolveResponse, function (error: AxiosError) {
+            if (error.response?.headers['x-inertia-location']) {
+                window.location.href = error.response.headers['x-inertia-location'];
+                return Promise.resolve(error.response)
+            }
+
+            if (!error.response?.headers['x-inertia']) {
+                renderError(error.response as AxiosResponse)
+            } else {
+                resolveResponse(error.response as AxiosResponse)
+            }
+
+            return Promise.reject(error)
+        })
+    })
+}
+
+function pageMutations(newPage: Page, oldPage: Page): Page {
+    if (newPage.deepMergeProps) {
+        for (const prop of newPage.deepMergeProps) {
+            newPage.props[prop] = deepMerge(oldPage.props[prop], newPage.props[prop])
+        }
+    }
+
+    if (newPage.mergeProps) {
+        for (const prop of newPage.mergeProps) {
+            const incomingProp = newPage.props[prop]
+
+            if (Array.isArray(incomingProp)) {
+                newPage.props[prop] = [...((oldPage.props[prop] || []) as any[]), ...incomingProp]
+            } else if (typeof incomingProp === 'object' && incomingProp !== null) {
+                newPage.props[prop] = {
+                    ...((oldPage.props[prop] || []) as Record<string, any>),
+                    ...incomingProp,
+                }
+            }
+        }
+    }
+
+    return newPage
+}
+
+function loadDeferredProps(page: Page) {
+    if (!page.deferredProps) {
+        return
+    }
+
+    for (const props of Object.values(page.deferredProps)) {
+        axios.reload({
+            vortex: {
+                only: props,
+                preserveHistory: true,
+                preserveScroll: true,
+            }
+        })
+    }
+}
+
+function resolveResponse(response) {
+    if (!response.config.vortex || !response.headers['x-inertia']) {
+        return response
+    }
+
+    const page = getPage()
+    const config = (typeof response.config.vortex === "object" ? response.config.vortex : {}) as VortexConfig
+
+    if (Array.isArray(config.only) && config.only.length > 0) {
+        const replace = {}
+
+        for (const prop of config.only) {
+            replace[prop] = response.data.props[prop]
+        }
+
+        response.data.props = { ...page.props, ...replace }
+    }
+
+    if (Array.isArray(config.except) && config.except.length > 0) {
+        const replace = {}
+
+        for (const prop of config.except) {
+            replace[prop] = page.props[prop]
+        }
+
+        response.data.props = { ...response.data.props, ...replace }
+    }
+
+    response.data = pageMutations(response.data, page)
+
+    if (config?.preserveHistory) {
+        response.data.url = page?.url || response.data.url
+    } else if (config?.replaceHistory || (window.history.state.url === response.data.url && config?.replaceHistory !== false)) {
+        window.history.replaceState(response.data, "", response.data.url)
+    } else {
+        window.history.pushState(response.data, "", response.data.url)
+    }
+
+    setPage(response.data)
+
+    loadDeferredProps(response.data)
+
+    if (!config?.preserveScroll) {
+        window.scrollTo(0, 0)
+    }
+
+    return response
+}
+
+function renderError(response: AxiosResponse) {
+    // render a modal window with rejected response body
+    const dialog = document.createElement('dialog')
+    dialog.style.position = 'fixed'
+
+    const form = document.createElement('form')
+    form.method = 'dialog'
+    form.style.position = 'absolute'
+    form.style.inset = '0'
+
+    const button = document.createElement('button')
+    button.innerText = 'close'
+    button.type = 'submit'
+    button.style.width = '100%'
+    button.style.height = '100%'
+    button.style.opacity = '0'
+
+    const iframe = document.createElement('iframe')
+    iframe.style.width = '90vw'
+    iframe.style.height = '90vh'
+    iframe.src = URL.createObjectURL(new Blob([response.data], { type: response.headers['content-type'] }))
+
+    form.appendChild(button)
+    dialog.appendChild(iframe)
+    dialog.appendChild(form)
+
+    dialog.onclose = () => {
+        URL.revokeObjectURL(iframe.src)
+        document.body.removeChild(dialog)
+        document.body.style.overflow = ''
+    }
+
+    document.body.appendChild(dialog)
+    document.body.style.overflow = 'hidden'
+
+    dialog.showModal()
+}
+
+const deepMerge = (target: any, source: any) => {
+    if (Array.isArray(source)) {
+        // Merge arrays by concatenating the existing and incoming elements
+        return [...(Array.isArray(target) ? target : []), ...source]
+    }
+
+    if (typeof source === 'object' && source !== null) {
+        // Merge objects by iterating over keys
+        return Object.keys(source).reduce(
+            (acc, key) => {
+                acc[key] = deepMerge(target ? target[key] : undefined, source[key])
+                return acc
+            },
+            { ...target },
+        )
+    }
+
+    // If the source is neither an array nor an object, return it directly
+    return source
+}
+
+export default inertia

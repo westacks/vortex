@@ -9,11 +9,7 @@ import { getPage, setPage, type Page } from './page'
  * @param port The port to listen on SSR server (in server mode)
  */
 export function createVortexServer<T>(renderer: (page: Page) => (T | Promise<T>), port: number = 13714) {
-    if (argv.length >= 3) {
-        return createCli(renderer)
-    }
-
-    return createSrv(renderer, port)
+    return argv.length >= 3 ? createCli(renderer) : createSrv(renderer, port)
 }
 
 const read = (message: IncomingMessage): Promise<string> => new Promise((resolve, reject) => {

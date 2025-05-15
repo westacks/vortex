@@ -1,4 +1,4 @@
-import type { AxiosRequestConfig, AxiosResponse, AxiosInstance, AxiosInterceptorManager, AxiosRequestHeaders, HeadersDefaults, AxiosHeaderValue } from "axios";
+import type { AxiosRequestConfig, AxiosResponse, AxiosInstance, AxiosInterceptorManager, AxiosRequestHeaders, HeadersDefaults, AxiosHeaderValue, InternalAxiosRequestConfig } from "axios";
 import { getPage as page, setPage } from "./page";
 import http from "axios";
 
@@ -20,7 +20,7 @@ export interface Router extends AxiosInstance {
     postForm<T = any, R = RouterResponse<T>, D = any>(url: string, data?: D, config?: RouterRequestConfig<D>): Promise<R>;
     putForm<T = any, R = RouterResponse<T>, D = any>(url: string, data?: D, config?: RouterRequestConfig<D>): Promise<R>;
     patchForm<T = any, R = RouterResponse<T>, D = any>(url: string, data?: D, config?: RouterRequestConfig<D>): Promise<R>;
-    reload<T = any, R = AxiosResponse<T>, D = any>(config: RouterRequestConfig<D>): Promise<R>
+    reload<T = any, R = AxiosResponse<T>, D = any>(config?: RouterRequestConfig<D>): Promise<R>
 
     <T = any, R = RouterResponse<T>, D = any>(config: RouterRequestConfig<D>): Promise<R>;
     <T = any, R = RouterResponse<T>, D = any>(url: string, config?: RouterRequestConfig<D>): Promise<R>;
@@ -36,18 +36,17 @@ interface RouterDefaults<D = any> extends Omit<RouterRequestConfig<D>, 'headers'
     headers: HeadersDefaults;
 }
 
-export type VortexConfig = {
-    preserve?: boolean
-    only?: string[]
-}
-
-interface RouterRequestConfig<D = any> extends AxiosRequestConfig<D> {
-    vortex: VortexConfig | Record<string, unknown> | boolean
+export interface VortexConfig {
     [key: string]: unknown
 }
 
-interface InternalRouterRequestConfig<D = any> extends RouterRequestConfig<D> {
-    headers: AxiosRequestHeaders;
+export interface RouterRequestConfig<D = any> extends AxiosRequestConfig<D> {
+    vortex?: VortexConfig | boolean;
+    [key: string]: unknown;
+}
+
+export interface InternalRouterRequestConfig<D = any> extends InternalAxiosRequestConfig<D> {
+    vortex?: VortexConfig | boolean;
 }
 
 interface RouterResponse<T = any, D = any> extends AxiosResponse<T, D> {
@@ -57,7 +56,7 @@ interface RouterResponse<T = any, D = any> extends AxiosResponse<T, D> {
 export type VortexExtension = (interceptors: {
     request: AxiosInterceptorManager<InternalRouterRequestConfig<any>>,
     response: AxiosInterceptorManager<RouterResponse<any, any>>,
-}) => { request?: number, response?: number } | void
+}) => { request?: number, response?: number, name?: string } | void
 
 export let axios: Router
 
@@ -77,6 +76,11 @@ export function install(...extensions: VortexExtension[]): () => void {
 
     const uninstall = extensions.reduce((acc, x) => {
         const extension = x(axios.interceptors)
+
+        if (extension?.name && typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent(`vortex:extension-installed`, { detail: extension.name }))
+        }
+
         acc.request = [...acc.request, ...(extension?.request ? [extension.request] : [])]
         acc.response = [...acc.response, ...(extension?.response ? [extension.response] : [])]
         return acc
@@ -99,6 +103,7 @@ export function createRouter() {
 
     window.addEventListener("popstate", popstate)
 
+    axios.defaults.withCredentials = true
     axios.defaults.vortex = true
 }
 
@@ -106,4 +111,36 @@ export function destroyRouter() {
     window.removeEventListener("popstate", popstate)
 
     axios = undefined as any
+}
+
+export function link(node: HTMLElement, options: RouterRequestConfig = {}) {
+    function mergeOptions(options) {
+        options.method = options.method || 'get'
+        options.url = options.url || (node as HTMLAnchorElement).href || ''
+        options.data = options.data || {}
+
+        if (node instanceof HTMLAnchorElement) {
+            node.href = options.url
+        }
+
+        return options
+    }
+
+    function navigate(event) {
+        event.preventDefault()
+        axios(options)
+    }
+
+    options = mergeOptions(options)
+
+    node.addEventListener('click', navigate)
+
+    return {
+        update(newOptions) {
+            options = mergeOptions(newOptions)
+        },
+        destroy() {
+            node.removeEventListener('click', navigate)
+        }
+    }
 }

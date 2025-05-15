@@ -8,12 +8,17 @@ export type Page = {
     props: Record<string, unknown>
     url: string
     version: string|null
+    clearHistory: boolean
+    encryptHistory: boolean
+    deferredProps?: Record<string, string[]>
+    mergeProps?: string[]
+    deepMergeProps?: string[]
 }
 
 /**
  * @see https://lodash.com/docs#isEqual
  */
-function isEqual<T>(x: T, y: T) {
+function isEqual<T>(x: T, y: T): boolean {
     const ok = Object.keys, tx = typeof x, ty = typeof y;
     return x && y && tx === 'object' && tx === ty ? (
         ok(x).length === ok(y).length &&

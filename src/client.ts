@@ -24,9 +24,13 @@ export async function createVortex(setup: (el: HTMLElement, page: Page, hydrate:
     if (!page) throw new Error('Initial page data not defined!');
 
     setPage(page);
+
     createRouter();
 
     const dispose = await setup(element, page, !!element.dataset?.ssr);
+
+    delete element.dataset.page
+    delete element.dataset.ssr
 
     return () => {
         dispose && dispose();

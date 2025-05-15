@@ -3,6 +3,7 @@ docs/.vitepress/cache
 package-lock.json
 yarn.lock
 bun.lockb
+bun.lock
 pnpm-lock.yaml
 node_modules
 dist
