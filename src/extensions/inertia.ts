@@ -170,29 +170,57 @@ function resolveResponse(response) {
 }
 
 function renderError(response: AxiosResponse) {
-    // render a modal window with rejected response body
     const dialog = document.createElement('dialog')
-    dialog.style.position = 'fixed'
-    dialog.style.inset = '0'
-    dialog.style.overflow = 'hidden'
+    Object.assign(dialog.style, {
+        position: 'fixed',
+        inset: '0',
+        maxWidth: 'none',
+        maxHeight: 'none',
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: 'transparent',
+        backdropFilter: 'blur(3px)',
+        outline: 'none',
+    })
+
+    dialog.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            dialog.close()
+        }
+    });
 
     const form = document.createElement('form')
     form.method = 'dialog'
-    form.style.position = 'absolute'
-    form.style.inset = '0'
-    form.style.zIndex = '-1'
+    Object.assign(form.style, {
+        position: 'absolute',
+        inset: '0',
+        zIndex: '-1',
+        margin: '0',
+        padding: '0',
+        border: 'none',
+    })
 
     const button = document.createElement('button')
-    button.innerText = 'close'
     button.type = 'submit'
-    button.style.width = '100%'
-    button.style.height = '100%'
-    button.style.opacity = '0'
+    button.innerText = 'close'
+    Object.assign(button.style, {
+        width: '100%',
+        height: '100%',
+        opacity: '0',
+        cursor: 'default',
+    })
 
     const iframe = document.createElement('iframe')
-    iframe.style.width = '90dvw'
-    iframe.style.height = '90dvh'
-    iframe.src = URL.createObjectURL(new Blob([response.data], { type: response.headers['content-type'] }))
+    iframe.src = URL.createObjectURL(
+        new Blob([response.data], { type: response.headers['content-type'] })
+    )
+    Object.assign(iframe.style, {
+        width: '90vw',
+        height: '90vh',
+    })
 
     form.appendChild(button)
     dialog.appendChild(iframe)
@@ -208,6 +236,7 @@ function renderError(response: AxiosResponse) {
     document.body.style.overflow = 'hidden'
 
     dialog.showModal()
+    dialog.focus()
 }
 
 const deepMerge = (target: any, source: any) => {
