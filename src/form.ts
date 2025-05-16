@@ -45,6 +45,10 @@ class Form<TForm extends object> {
         return this;
     }
 
+    reset() {
+        return Object.assign(this, this._initial);
+    }
+
     submit<TForm>(options: RouterRequestConfig<TForm>) {
         this._recentlySuccessfulTimeout && clearTimeout(this._recentlySuccessfulTimeout);
         this.wasSuccessful = false;
