@@ -19,17 +19,15 @@ declare module '../index' {
  */
 const inertia = (initialPage: Page): VortexExtension => {
 
-    const afterInstall = (e: CustomEvent<string>) => {
-        if (e.detail === "inertia") {
+    const afterInstall = (e: Event) => {
+        if ((e as CustomEvent<string>).detail === "inertia") {
             loadDeferredProps(initialPage)
 
-            // @ts-ignore
             window.removeEventListener("vortex:extension-installed", afterInstall)
         }
     }
 
     if (typeof window !== "undefined") {
-        // @ts-ignore
         window.addEventListener("vortex:extension-installed", afterInstall)
     }
 
@@ -82,7 +80,7 @@ const inertia = (initialPage: Page): VortexExtension => {
 function pageMutations(newPage: Page, oldPage: Page): Page {
     if (newPage.deepMergeProps) {
         for (const prop of newPage.deepMergeProps) {
-            newPage.props[prop] = deepMerge(oldPage.props[prop], newPage.props[prop])
+            newPage.props[prop] = deepMerge(oldPage.props[prop] as any, newPage.props[prop] as any)
         }
     }
 
@@ -94,7 +92,7 @@ function pageMutations(newPage: Page, oldPage: Page): Page {
                 newPage.props[prop] = [...((oldPage.props[prop] || []) as any[]), ...incomingProp]
             } else if (typeof incomingProp === 'object' && incomingProp !== null) {
                 newPage.props[prop] = {
-                    ...((oldPage.props[prop] || []) as Record<string, any>),
+                    ...((oldPage.props[prop] || []) as Record<string, unknown>),
                     ...incomingProp,
                 }
             }
@@ -239,7 +237,7 @@ function renderError(response: AxiosResponse) {
     dialog.focus()
 }
 
-const deepMerge = (target: any, source: any) => {
+const deepMerge = (target: Array<unknown>|object, source: Array<unknown>|object) => {
     if (Array.isArray(source)) {
         // Merge arrays by concatenating the existing and incoming elements
         return [...(Array.isArray(target) ? target : []), ...source]

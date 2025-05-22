@@ -52,7 +52,6 @@ async function createSrv<T>(renderer: (page: Page) => (T | Promise<T>), port: nu
     console.log(`[VORTEX] Starting server on port ${port}...`)
 
     return createServer(async (request, response) => {
-        const timer = Date.now()
         const route = routes[request.url ?? ''] || routes['*']
 
         try {

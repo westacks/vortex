@@ -33,7 +33,9 @@ export async function createVortex(setup: (el: HTMLElement, page: Page, hydrate:
     delete element.dataset.ssr
 
     return () => {
-        dispose && dispose();
+        if (dispose instanceof Function) {
+            dispose();
+        }
         destroyRouter();
     }
 }

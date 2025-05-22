@@ -2,11 +2,17 @@ import { defineConfig } from 'vite'
 import { resolve } from 'node:path'
 import { builtinModules } from 'node:module'
 import types from 'vite-plugin-dts'
+import eslint from 'vite-plugin-eslint';
 
 export default defineConfig({
-    plugins: [types()],
+    plugins: [
+        types(),
+        eslint({
+            include: resolve(__dirname, 'src/**/*.ts'),
+            fix: true,
+        }),
+    ],
     build: {
-        minify: true,
         lib: {
             name: 'vortex',
             entry: {

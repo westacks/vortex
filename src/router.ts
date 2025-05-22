@@ -1,9 +1,9 @@
-import type { AxiosRequestConfig, AxiosResponse, AxiosInstance, AxiosInterceptorManager, AxiosRequestHeaders, HeadersDefaults, AxiosHeaderValue, InternalAxiosRequestConfig } from "axios";
-import { getPage as page, setPage } from "./page";
+import type { AxiosRequestConfig, AxiosResponse, AxiosInstance, AxiosInterceptorManager, HeadersDefaults, AxiosHeaderValue, InternalAxiosRequestConfig } from "axios";
+import { getPage, setPage } from "./page";
 import http from "axios";
 
 export interface Router extends AxiosInstance {
-    constructor(config?: RouterRequestConfig);
+    new(config?: RouterRequestConfig);
     interceptors: {
         request: AxiosInterceptorManager<InternalRouterRequestConfig>;
         response: AxiosInterceptorManager<RouterResponse>;
@@ -96,10 +96,10 @@ export function createRouter() {
     axios = http.create() as Router
 
     axios.reload = function (config) {
-        return this({ url: page()?.url, ...config })
+        return this({ url: getPage()?.url, ...config })
     }
 
-    window.history.replaceState(page(), "", window.location.href)
+    window.history.replaceState(getPage(), "", window.location.href)
 
     window.addEventListener("popstate", popstate)
 

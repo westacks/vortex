@@ -18,7 +18,7 @@ let observer: EffectInstance | null = null
  */
 export function signal<T>(value: T|undefined = undefined, equals: (a: T, b: T) => boolean = (a, b) => a === b): Signal<T> {
     let state: T = value as T;
-    let subscribers: Set<EffectInstance> = new Set;
+    const subscribers: Set<EffectInstance> = new Set;
 
     function unlink(dependency: EffectInstance) {
         subscribers.delete(dependency)
@@ -56,7 +56,7 @@ export function signal<T>(value: T|undefined = undefined, equals: (a: T, b: T) =
  */
 export function effect(fn: Effect): () => void {
     let cleaner: EffectDestructor
-    let subscribers = new Set<EffectLink>
+    const subscribers = new Set<EffectLink>
     const instance: EffectInstance = { notify, link }
 
     function notify() {
@@ -77,7 +77,9 @@ export function effect(fn: Effect): () => void {
         }
         subscribers.clear()
         const flush = await cleaner
-        flush instanceof Function && flush()
+        if (flush instanceof Function) {
+            flush()
+        }
         cleaner = undefined
     }
 

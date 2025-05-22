@@ -1,15 +1,14 @@
-import { getPage } from "./page";
-import { signal, effect, type Signal, type SignalSetter, type SignalGetter } from "./signals";
+import { signal, effect } from "./signals";
 import { axios, RouterRequestConfig } from "./router";
-import { AxiosProgressEvent } from "axios";
 import { isEqual } from "./helpers";
 
 type FormData<T extends object> = T & Form<T>
 
 class Form<TForm extends object> {
     protected _initial: TForm;
-    protected _data: any = undefined;
+    protected _transform: unknown = undefined;
     protected _recentlySuccessfulTimeout: NodeJS.Timeout | null = null;
+    protected _handler: ProxyHandler<FormData<TForm>>
 
     public wasSuccessful: boolean = false;
     public recentlySuccessful: boolean = false;
@@ -24,10 +23,16 @@ class Form<TForm extends object> {
         return !isEqual(this.data(), this._initial);
     }
 
-    constructor (initial: TForm) {
-        this._initial = initial;
+    constructor (initial: TForm, handler: ProxyHandler<FormData<TForm>>) {
+        this._initial = initial
+        this._handler = handler
 
-        Object.assign(this, initial);
+        Object.defineProperty(this, "_initial", { enumerable: false })
+        Object.defineProperty(this, "_transform", { enumerable: false })
+        Object.defineProperty(this, "_recentlySuccessfulTimeout", { enumerable: false })
+        Object.defineProperty(this, "_handler", { enumerable: false, writable: false, configurable: false })
+
+        this.reset()
     }
 
     data(): TForm {
@@ -39,22 +44,24 @@ class Form<TForm extends object> {
         }, {} as TForm);
     }
 
-    transform<T>(fn: (data: TForm) => T) {
-        this._data = fn(this.data());
+    transform(fn: (data: TForm) => unknown) {
+        this._transform = fn(this.data());
 
         return this;
     }
 
     reset() {
-        return Object.assign(this, this._initial);
+        return Object.assign(this, wrap(this._initial, this._handler));
     }
 
-    submit<TForm>(options: RouterRequestConfig<TForm>) {
-        this._recentlySuccessfulTimeout && clearTimeout(this._recentlySuccessfulTimeout);
+    request<TForm>(options: RouterRequestConfig<TForm>) {
+        if (this._recentlySuccessfulTimeout) {
+            clearTimeout(this._recentlySuccessfulTimeout);
+        }
         this.wasSuccessful = false;
         this.processing = true;
 
-        return axios.request({...options, data: this._data || this.data()})
+        return axios.request({...options, data: this._transform || this.data()})
             .catch(error => {
                 return Promise.reject(error);
             })
@@ -71,61 +78,71 @@ class Form<TForm extends object> {
                 return response;
             })
             .finally(() => {
-                this._data = undefined;
+                this._transform = undefined;
                 this.processing = false;
             })
     }
 
     get(url: string, options?: RouterRequestConfig) {
-        return this.submit({ ...options, url, method: 'get' });
+        return this.request({ ...options, url, method: 'get' });
     }
 
     post(url: string, options?: RouterRequestConfig) {
-        return this.submit({ ...options, url, method: 'post' });
+        return this.request({ ...options, url, method: 'post' });
     }
 
     put(url: string, options?: RouterRequestConfig) {
-        return this.submit({ ...options, url, method: 'put' });
+        return this.request({ ...options, url, method: 'put' });
     }
 
     patch(url: string, options?: RouterRequestConfig) {
-        return this.submit({ ...options, url, method: 'patch' });
+        return this.request({ ...options, url, method: 'patch' });
     }
 
     delete(url: string, options?: RouterRequestConfig) {
-        return this.submit({ ...options, url, method: 'delete' });
+        return this.request({ ...options, url, method: 'delete' });
     }
 }
 
 export function useForm<T extends object>(
-    rememberKeyOrData: string | T | (() => T),
-    maybeData?: T | (() => T)
+    data: T | (() => T),
+    rememberKey?: string,
 ) {
-    const rememberKey = typeof rememberKeyOrData === "string" ? rememberKeyOrData : undefined
-    const input: T | (() => T) = (typeof rememberKeyOrData === 'string' ? maybeData : rememberKeyOrData) ?? ({} as T)
-    const initial: T = typeof input === 'function' ? input() : input
+    data = typeof data === 'function' ? data() : data
 
     const [get, set] = signal<FormData<T>>(undefined, isEqual)
     const subscribe = (fn: (form: FormData<T>) => void) => effect(() => fn(get()))
 
-    const form = new Proxy(new Form(initial) as FormData<T>, {
-        set(target, key: string, value, receiver) {
-            if (! (key in target)) {
-                return false
-            }
+    set(createProxy(data, set) as FormData<T>);
 
+    return { get, set, subscribe }
+}
+
+function createProxy<T extends object>(data: T, set: (form: FormData<T>, changed?: boolean) => void) {
+    const handler : ProxyHandler<FormData<T>> = {
+        set(target, key: string, value, receiver) {
             const changed = target[key] !== value
             const result = Reflect.set(target, key, value, receiver);
 
-            if (result && !key.startsWith('#')) {
-                set(form, changed);
+            if (result && !key.startsWith('_')) {
+                set(form as FormData<T>, changed);
             }
 
             return result
         }
-    })
+    }
 
-    set(form as FormData<T>);
+    const form = new Proxy(new Form(data, handler), handler)
 
-    return { get, set, subscribe }
+    return form
+}
+
+function wrap<T extends object>(data: T, handler: ProxyHandler<FormData<T>>) {
+    return Object.entries(data).reduce(
+        (acc, [key, value]) => {
+            acc[key] = typeof value !== 'object' ? value : new Proxy(wrap(value, handler), handler);
+
+            return acc
+        },
+        {} as T)
 }
