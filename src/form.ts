@@ -2,13 +2,13 @@ import { signal, effect } from "./signals";
 import { axios, RouterRequestConfig } from "./router";
 import { isEqual } from "./helpers";
 
-type FormData<T extends object> = T & Form<T>
+type FData<T extends object> = T & Form<T>
 
 class Form<TForm extends object> {
-    protected _initial: TForm;
+    protected _defaults: TForm;
     protected _transform: unknown = undefined;
     protected _recentlySuccessfulTimeout: NodeJS.Timeout | null = null;
-    protected _handler: ProxyHandler<FormData<TForm>>
+    protected readonly _handler: ProxyHandler<FData<TForm>>
 
     public wasSuccessful: boolean = false;
     public recentlySuccessful: boolean = false;
@@ -20,14 +20,14 @@ class Form<TForm extends object> {
     }
 
     public get isDirty() {
-        return !isEqual(this.data(), this._initial);
+        return !isEqual(this.data(), this._defaults);
     }
 
-    constructor (initial: TForm, handler: ProxyHandler<FormData<TForm>>) {
-        this._initial = initial
+    constructor (initial: TForm, handler: ProxyHandler<FData<TForm>>) {
+        this._defaults = initial
         this._handler = handler
 
-        Object.defineProperty(this, "_initial", { enumerable: false })
+        Object.defineProperty(this, "_defaults", { enumerable: false })
         Object.defineProperty(this, "_transform", { enumerable: false })
         Object.defineProperty(this, "_recentlySuccessfulTimeout", { enumerable: false })
         Object.defineProperty(this, "_handler", { enumerable: false, writable: false, configurable: false })
@@ -36,7 +36,7 @@ class Form<TForm extends object> {
     }
 
     data(): TForm {
-        const keys = Object.keys(this._initial);
+        const keys = Object.keys(this._defaults);
 
         return keys.reduce((acc, key) => {
             acc[key] = this[key];
@@ -50,8 +50,56 @@ class Form<TForm extends object> {
         return this;
     }
 
-    reset() {
-        return Object.assign(this, wrap(this._initial, this._handler));
+    reset(...fields: string[]) {
+        const data = fields.length > 0
+            ? Object.keys(this._defaults)
+                .filter(key => fields.includes(key))
+                .reduce((obj, key) => {
+                    obj[key] = this._defaults[key];
+                    return obj
+                }, {})
+            : this._defaults
+
+        Object.assign(this, wrap(data, this._handler));
+
+        return this;
+    }
+
+    defaults(field?: string | Record<string, unknown>, value?: unknown) {
+        if (typeof field === 'string') {
+            field = { [field]: value };
+        }
+
+        if (!field) {
+            field = unwrap(Object.keys(this._defaults).reduce((obj, key) => {
+                obj[key] = this[key];
+                return obj
+            }, {}))
+        }
+
+        this._defaults = { ...this._defaults, ...field };
+
+        return this;
+    }
+
+    clearErrors(...fields: string[]) {
+        if (fields.length === 0) {
+            this.errors = {};
+        } else for (const field of fields) {
+            delete this.errors[field];
+        }
+
+        return this;
+    }
+
+    setError(field: string | Record<string, string>, message?: string) {
+        if (typeof field === 'string') {
+            field = { [field]: message as string };
+        }
+
+        this.errors = { ...this.errors, ...field };
+
+        return this;
     }
 
     request<TForm>(options: RouterRequestConfig<TForm>) {
@@ -61,7 +109,13 @@ class Form<TForm extends object> {
         this.wasSuccessful = false;
         this.processing = true;
 
-        return axios.request({...options, data: this._transform || this.data()})
+        let data: object | FormData = this._transform || this.data();
+
+        if (containsFile(data)) {
+            data = objectToFormData(data)
+        }
+
+        return axios.request({ ...options, data })
             .catch(error => {
                 return Promise.reject(error);
             })
@@ -110,22 +164,22 @@ export function useForm<T extends object>(
 ) {
     data = typeof data === 'function' ? data() : data
 
-    const [get, set] = signal<FormData<T>>(undefined, isEqual)
-    const subscribe = (fn: (form: FormData<T>) => void) => effect(() => fn(get()))
+    const [get, set] = signal<FData<T>>(undefined, isEqual)
+    const subscribe = (fn: (form: FData<T>) => void) => effect(() => fn(get()))
 
-    set(createProxy(data, set) as FormData<T>);
+    set(createProxy(data, set) as FData<T>);
 
     return { get, set, subscribe }
 }
 
-function createProxy<T extends object>(data: T, set: (form: FormData<T>, changed?: boolean) => void) {
-    const handler : ProxyHandler<FormData<T>> = {
+function createProxy<T extends object>(data: T, set: (form: FData<T>, changed?: boolean) => void) {
+    const handler : ProxyHandler<FData<T>> = {
         set(target, key: string, value, receiver) {
             const changed = target[key] !== value
             const result = Reflect.set(target, key, value, receiver);
 
             if (result && !key.startsWith('_')) {
-                set(form as FormData<T>, changed);
+                set(form as FData<T>, changed);
             }
 
             return result
@@ -137,7 +191,7 @@ function createProxy<T extends object>(data: T, set: (form: FormData<T>, changed
     return form
 }
 
-function wrap<T extends object>(data: T, handler: ProxyHandler<FormData<T>>) {
+function wrap<T extends object>(data: T, handler: ProxyHandler<FData<T>>) {
     return Object.entries(data).reduce(
         (acc, [key, value]) => {
             acc[key] = typeof value !== 'object' ? value : new Proxy(wrap(value, handler), handler);
@@ -145,4 +199,66 @@ function wrap<T extends object>(data: T, handler: ProxyHandler<FormData<T>>) {
             return acc
         },
         {} as T)
+}
+
+
+function unwrap<T extends object>(data: T): T {
+    if (typeof data !== 'object') {
+        return data
+    }
+
+    if (Array.isArray(data)) {
+        return data.map(unwrap) as unknown as T;
+    }
+
+    return Object.keys(data).reduce((acc, key) => {
+        acc[key] = unwrap(data[key]);
+        return acc
+    }, {} as T)
+}
+
+function containsFile<T extends object>(obj: T, visited = new Set()) {
+    if (visited.has(obj)) return false;
+    visited.add(obj);
+
+    if (obj instanceof File || obj instanceof Blob) {
+        return true;
+    }
+
+    if (Array.isArray(obj)) {
+        return obj.some(item => containsFile(item, visited));
+    }
+
+    if (obj && typeof obj === 'object') {
+        return Object.values(obj).some(value => containsFile(value, visited));
+    }
+
+    return false;
+}
+
+function objectToFormData(obj, form = new FormData(), namespace = '') {
+    for (const key in obj) {
+        if (!Object.hasOwn(obj, key)) continue;
+        const value = obj[key];
+        const formKey = namespace ? `${namespace}[${key}]` : key;
+
+        if (value instanceof File || value instanceof Blob) {
+            form.append(formKey, value);
+        } else if (Array.isArray(value)) {
+            value.forEach((item, index) => {
+                const arrayKey = `${formKey}[${index}]`;
+                if (typeof item === 'object' && item !== null) {
+                    objectToFormData(item, form, arrayKey);
+                } else {
+                    form.append(arrayKey, item);
+                }
+            });
+        } else if (typeof value === 'object' && value !== null) {
+            objectToFormData(value, form, formKey);
+        } else if (value !== undefined && value !== null) {
+            form.append(formKey, value);
+        }
+    }
+
+    return form;
 }
