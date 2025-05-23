@@ -192,9 +192,17 @@ function createProxy<T extends object>(data: T, set: (form: FData<T>, changed?: 
 }
 
 function wrap<T extends object>(data: T, handler: ProxyHandler<FData<T>>) {
+    if (typeof data !== 'object' || data === null) {
+        return data
+    }
+
+    if (Array.isArray(data)) {
+        return data.map(item => wrap(item, handler));
+    }
+
     return Object.entries(data).reduce(
         (acc, [key, value]) => {
-            acc[key] = typeof value !== 'object' ? value : new Proxy(wrap(value, handler), handler);
+            acc[key] = typeof value !== 'object' || value === null ? value : new Proxy(wrap(value, handler), handler);
 
             return acc
         },
@@ -203,7 +211,7 @@ function wrap<T extends object>(data: T, handler: ProxyHandler<FData<T>>) {
 
 
 function unwrap<T extends object>(data: T): T {
-    if (typeof data !== 'object') {
+    if (typeof data !== 'object' || data === null) {
         return data
     }
 
