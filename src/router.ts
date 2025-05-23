@@ -62,7 +62,7 @@ export let axios: Router
 
 const popstate = (event) => {
     if (!event.state) return
-    setPage(event.state)
+    setPage(event.state.page)
 }
 
 /**
@@ -99,7 +99,7 @@ export function createRouter() {
         return this({ url: getPage()?.url, ...config })
     }
 
-    window.history.replaceState(getPage(), "", window.location.href)
+    window.history.replaceState({ page: getPage() }, "", getPage()?.url)
 
     window.addEventListener("popstate", popstate)
 

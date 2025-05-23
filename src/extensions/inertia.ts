@@ -151,9 +151,9 @@ function resolveResponse(response) {
     if (config?.preserveHistory) {
         response.data.url = page?.url || response.data.url
     } else if (config?.replaceHistory || (window.history.state.url === response.data.url && config?.replaceHistory !== false)) {
-        window.history.replaceState(response.data, "", response.data.url)
+        window.history.replaceState({ page: response.data }, "", response.data.url)
     } else {
-        window.history.pushState(response.data, "", response.data.url)
+        window.history.pushState({ page: response.data }, "", response.data.url)
     }
 
     setPage(response.data)
@@ -208,7 +208,7 @@ function renderError(response: AxiosResponse) {
         width: '100%',
         height: '100%',
         opacity: '0',
-        cursor: 'default',
+        cursor: 'pointer',
     })
 
     const iframe = document.createElement('iframe')

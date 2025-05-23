@@ -2,13 +2,13 @@ import { signal, effect } from "./signals";
 import { axios, RouterRequestConfig } from "./router";
 import { isEqual } from "./helpers";
 
-type FData<T extends object> = T & Form<T>
+export type FData<T extends object> = T & Form<T>
 
-class Form<TForm extends object> {
-    protected _defaults: TForm;
-    protected _transform: unknown = undefined;
-    protected _recentlySuccessfulTimeout: NodeJS.Timeout | null = null;
-    protected readonly _handler: ProxyHandler<FData<TForm>>
+export class Form<TForm extends object> {
+    _defaults: TForm;
+    _transform: unknown = undefined;
+    _recentlySuccessfulTimeout: NodeJS.Timeout | null = null;
+    readonly _handler: ProxyHandler<FData<TForm>>
 
     public wasSuccessful: boolean = false;
     public recentlySuccessful: boolean = false;
@@ -39,7 +39,7 @@ class Form<TForm extends object> {
         const keys = Object.keys(this._defaults);
 
         return keys.reduce((acc, key) => {
-            acc[key] = this[key];
+            acc[key] = unwrap(this[key]);
             return acc;
         }, {} as TForm);
     }
@@ -60,6 +60,12 @@ class Form<TForm extends object> {
                 }, {})
             : this._defaults
 
+        Object.assign(this, wrap(data, this._handler));
+
+        return this;
+    }
+
+    fill(data: TForm) {
         Object.assign(this, wrap(data, this._handler));
 
         return this;
@@ -186,9 +192,9 @@ function createProxy<T extends object>(data: T, set: (form: FData<T>, changed?: 
         }
     }
 
-    const form = new Proxy(new Form(data, handler), handler)
+    const form = new Form(data, handler)
 
-    return form
+    return new Proxy(form, handler)
 }
 
 function wrap<T extends object>(data: T, handler: ProxyHandler<FData<T>>) {
