@@ -185,7 +185,7 @@ function createProxy<T extends object>(data: T, set: (form: FData<T>, changed?: 
             const result = Reflect.set(target, key, value, receiver);
 
             if (result && !key.startsWith('_')) {
-                set(form as FData<T>, changed);
+                set(proxy as FData<T>, changed);
             }
 
             return result
@@ -193,12 +193,13 @@ function createProxy<T extends object>(data: T, set: (form: FData<T>, changed?: 
     }
 
     const form = new Form(data, handler)
+    const proxy = new Proxy(form, handler)
 
-    return new Proxy(form, handler)
+    return proxy
 }
 
 function wrap<T extends object>(data: T, handler: ProxyHandler<FData<T>>) {
-    if (typeof data !== 'object' || data === null) {
+    if (typeof data !== 'object' || data === null || data instanceof File || data instanceof Blob) {
         return data
     }
 
@@ -217,7 +218,7 @@ function wrap<T extends object>(data: T, handler: ProxyHandler<FData<T>>) {
 
 
 function unwrap<T extends object>(data: T): T {
-    if (typeof data !== 'object' || data === null) {
+    if (typeof data !== 'object' || data === null || data instanceof File || data instanceof Blob) {
         return data
     }
 
@@ -231,23 +232,15 @@ function unwrap<T extends object>(data: T): T {
     }, {} as T)
 }
 
-function containsFile<T extends object>(obj: T, visited = new Set()) {
-    if (visited.has(obj)) return false;
-    visited.add(obj);
-
-    if (obj instanceof File || obj instanceof Blob) {
-        return true;
+function containsFile<T extends object>(obj: T): boolean {
+    if (typeof obj !== 'object' || obj === null) {
+        return false
     }
 
-    if (Array.isArray(obj)) {
-        return obj.some(item => containsFile(item, visited));
-    }
-
-    if (obj && typeof obj === 'object') {
-        return Object.values(obj).some(value => containsFile(value, visited));
-    }
-
-    return false;
+    return Object.values(obj).some(item => item instanceof File || item instanceof Blob
+        ? true
+        : containsFile(item)
+    )
 }
 
 function objectToFormData(obj, form = new FormData(), namespace = '') {
