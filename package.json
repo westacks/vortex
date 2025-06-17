@@ -1,6 +1,6 @@
 {
   "name": "@westacks/vortex",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "license": "MIT",
   "description": "Server-based routing for SPAs",
   "author": "Dmytro Morozov <puny.flash@gmail.com>",
@@ -63,7 +63,6 @@
       "import": "./dist/server.js",
       "require": "./dist/server.cjs"
     },
-
     "./inertia": {
       "types": "./dist/extensions/inertia.d.ts",
       "import": "./dist/extensions/inertia.js",
@@ -74,7 +73,6 @@
       "import": "./dist/extensions/bprogress.js",
       "require": "./dist/extensions/bprogress.cjs"
     },
-
     "./svelte": {
       "types": "./dist/adapters/svelte/index.d.ts",
       "import": "./dist/adapters/svelte.js",
