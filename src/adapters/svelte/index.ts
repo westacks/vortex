@@ -1,6 +1,6 @@
 import { getPage, subscribe, useForm as useVortexForm } from '../../index'
 import { readable } from 'svelte/store'
-export { link } from '../../index'
+export { link as inertia } from '../../index'
 
 export const page = readable(getPage(), subscribe)
 
