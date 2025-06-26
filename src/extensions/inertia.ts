@@ -1,5 +1,6 @@
 import { axios, getPage, setPage, type VortexExtension, type VortexConfig, type Page } from "../index";
 import type { AxiosError, AxiosResponse } from "axios";
+import { RouterRequestConfig } from "../router";
 
 declare module '../index' {
     interface VortexConfig {
@@ -61,6 +62,10 @@ const inertia = (initialPage: Page): VortexExtension => {
             return request
         }),
         response: response.use(resolveResponse, function (error: AxiosError) {
+            if (!(error.response?.config as RouterRequestConfig).vortex || !error.response?.headers['x-inertia']) {
+                return response
+            }
+
             if (error.response?.headers['x-inertia-location']) {
                 window.location.href = error.response.headers['x-inertia-location'];
                 return Promise.resolve(error.response)
