@@ -1,6 +1,6 @@
 import { axios, getPage, setPage, type VortexExtension, type VortexConfig, type Page } from "../index";
 import type { AxiosError, AxiosResponse } from "axios";
-import { RouterRequestConfig } from "../router";
+import { InternalRouterRequestConfig } from "../router";
 
 declare module '../index' {
     interface VortexConfig {
@@ -62,7 +62,9 @@ const inertia = (initialPage: Page): VortexExtension => {
             return request
         }),
         response: response.use(resolveResponse, function (error: AxiosError) {
-            if (!(error.request?.config as RouterRequestConfig).vortex) {
+            const config: InternalRouterRequestConfig = error.config as InternalRouterRequestConfig
+
+            if (!config?.vortex) {
                 return Promise.reject(error)
             }
 
