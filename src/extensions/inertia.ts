@@ -62,7 +62,7 @@ const inertia = (initialPage: Page): VortexExtension => {
             return request
         }),
         response: response.use(resolveResponse, function (error: AxiosError) {
-            if (!(error.response?.config as RouterRequestConfig).vortex) {
+            if (!(error.request?.config as RouterRequestConfig).vortex) {
                 return Promise.reject(error)
             }
 
