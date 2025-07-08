@@ -22,7 +22,7 @@ export default defineConfig({
                 "index": resolve(__dirname, 'src/index.ts'),
                 "server": resolve(__dirname, 'src/server.ts'),
                 // Extensions
-                "extensions/inertia": resolve(__dirname, 'src/extensions/inertia.ts'),
+                "extensions/inertia": resolve(__dirname, 'src/extensions/inertia/index.ts'),
                 "extensions/bprogress": resolve(__dirname, 'src/extensions/bprogress.ts'),
                 // Adapters
                 "adapters/svelte": resolve(__dirname, 'src/adapters/svelte/index.ts'),

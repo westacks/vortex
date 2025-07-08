@@ -1,5 +1,5 @@
 import type { AxiosRequestConfig, AxiosResponse, AxiosInstance, AxiosInterceptorManager, HeadersDefaults, AxiosHeaderValue, InternalAxiosRequestConfig } from "axios";
-import { getPage, setPage } from "./page";
+import { getPage } from "./page";
 import http from "axios";
 
 export interface Router extends AxiosInstance {
@@ -56,14 +56,9 @@ export interface RouterResponse<T = any, D = any> extends AxiosResponse<T, D> {
 export type VortexExtension = (interceptors: {
     request: AxiosInterceptorManager<InternalRouterRequestConfig<any>>,
     response: AxiosInterceptorManager<RouterResponse<any, any>>,
-}) => { request?: number, response?: number, name?: string } | void
+}) => { request?: number, response?: number, name?: string, destroy?: () => void } | void
 
 export let axios: Router
-
-const popstate = (event) => {
-    if (!event.state) return
-    setPage(event.state.page)
-}
 
 /**
  * Register Vortex extensions
@@ -83,12 +78,15 @@ export function install(...extensions: VortexExtension[]): () => void {
 
         acc.request = [...acc.request, ...(extension?.request ? [extension.request] : [])]
         acc.response = [...acc.response, ...(extension?.response ? [extension.response] : [])]
+        acc.destroy = [...acc.destroy, ...(extension?.destroy ? [extension.destroy] : [])]
+
         return acc
-    }, { request: [] as number[], response: [] as number[] })
+    }, { request: [] as number[], response: [] as number[], destroy: [] as (() => void)[] })
 
     return () => {
         uninstall.request.forEach(x => axios?.interceptors.request.eject(x))
         uninstall.response.forEach(x => axios?.interceptors.response.eject(x))
+        uninstall.destroy.forEach(x => x())
     }
 }
 
@@ -99,17 +97,11 @@ export function createRouter() {
         return this({ url: getPage()?.url, ...config })
     }
 
-    window.history.replaceState({ page: getPage() }, "", getPage()?.url)
-
-    window.addEventListener("popstate", popstate)
-
     axios.defaults.withCredentials = true
     axios.defaults.vortex = true
 }
 
 export function destroyRouter() {
-    window.removeEventListener("popstate", popstate)
-
     axios = undefined as any
 }
 

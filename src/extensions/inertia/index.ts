@@ -1,8 +1,9 @@
-import { axios, getPage, setPage, type VortexExtension, type VortexConfig, type Page } from "../index";
+import { axios, getPage, setPage, type VortexExtension, type VortexConfig, type Page } from "../../index";
 import type { AxiosError, AxiosResponse } from "axios";
-import { InternalRouterRequestConfig } from "../router";
+import { InternalRouterRequestConfig } from "../../router";
+import { encrypt, decrypt, clear } from "./encryption";
 
-declare module '../index' {
+declare module '../../index' {
     interface VortexConfig {
         only?: string[]
         except?: string[]
@@ -13,19 +14,56 @@ declare module '../index' {
     }
 }
 
+async function pushState(data: Page, replace = false) {
+    const page = data.encryptHistory ? await encrypt(data) : data
+    const method = replace ? "replaceState" : "pushState"
+
+    window.history[method]({page}, "", data.url)
+}
+
+async function popState(event: PopStateEvent) {
+    if (!event.state) {
+        return
+    }
+
+    let page: Page | ArrayBuffer = event.state.page
+
+    try {
+        if (page instanceof ArrayBuffer) {
+            page = await decrypt<Page>(page)
+        }
+    } catch (error) {
+        console.warn('Failed to decrypt page data', { cause: error })
+
+        return axios.get(window.location.href, {
+            vortex: {
+                preserveScroll: true,
+                replaceHistory: true,
+            }
+        })
+    }
+
+    setPage(page as Page)
+}
+
 /**
  * Vortex Inertia extension
  *
  * @see https://inertiajs.com
  */
 const inertia = (initialPage: Page): VortexExtension => {
+    pushState(initialPage, true)
+
+    window.addEventListener("popstate", popState)
 
     const afterInstall = (e: Event) => {
-        if ((e as CustomEvent<string>).detail === "inertia") {
-            loadDeferredProps(initialPage)
-
-            window.removeEventListener("vortex:extension-installed", afterInstall)
+        if ((e as CustomEvent<string>).detail !== "inertia") {
+            return
         }
+
+        loadDeferredProps(initialPage)
+
+        window.removeEventListener("vortex:extension-installed", afterInstall)
     }
 
     if (typeof window !== "undefined") {
@@ -34,6 +72,7 @@ const inertia = (initialPage: Page): VortexExtension => {
 
     return ({ request, response }) => ({
         name: "inertia",
+        destroy: () => window.removeEventListener("popstate", popState),
         request: request.use(function (request) {
             if (!request.vortex) {
                 return request
@@ -157,13 +196,15 @@ function resolveResponse(response) {
 
     if (config?.preserveHistory) {
         response.data.url = page?.url || response.data.url
-    } else if (config?.replaceHistory || (window.history.state.url === response.data.url && config?.replaceHistory !== false)) {
-        window.history.replaceState({ page: response.data }, "", response.data.url)
     } else {
-        window.history.pushState({ page: response.data }, "", response.data.url)
+        pushState(response.data, config?.replaceHistory || (window.history.state.url === response.data.url && config?.replaceHistory !== false))
     }
 
     setPage(response.data)
+
+    if (page.clearHistory) {
+        clear()
+    }
 
     loadDeferredProps(response.data)
 
