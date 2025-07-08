@@ -306,4 +306,6 @@ const deepMerge = (target: Array<unknown>|object, source: Array<unknown>|object)
     return source
 }
 
+inertia.clearHistory = clear
+
 export default inertia

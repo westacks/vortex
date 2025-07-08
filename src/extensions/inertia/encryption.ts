@@ -1,3 +1,8 @@
+const config = {
+    key: 'historyKey',
+    iv: 'historyIv',
+}
+
 export function clear() {
     sessionStorage.removeItem(config.key)
     sessionStorage.removeItem(config.iv)
@@ -29,11 +34,6 @@ export async function decrypt<T>(data: BufferSource): Promise<T> {
     )
 
     return JSON.parse(new TextDecoder().decode(result))
-}
-
-export const config = {
-    key: 'historyKey',
-    iv: 'historyIv',
 }
 
 async function getKey() {
