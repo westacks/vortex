@@ -10,3 +10,4 @@
 - [ ] State remembering
 - [x] History encryption
 - [x] Server-side rendering
+- [ ] Simple frontend framework adapters
