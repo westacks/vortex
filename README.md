@@ -5,7 +5,7 @@
 - [x] Partial reloads
 - [x] Deferred props
 - [ ] Prefetching
-- [ ] Load when visible
+- [x] Load when visible
 - [x] Props merging
 - [x] State remembering
 - [x] History encryption

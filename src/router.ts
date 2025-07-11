@@ -95,35 +95,3 @@ export function createRouter() {
 export function destroyRouter() {
     axios = undefined as any
 }
-
-export function link(node: HTMLElement, options: RouterRequestConfig = {}) {
-    function mergeOptions(options) {
-        options.method = options.method || 'get'
-        options.url = options.url || (node as HTMLAnchorElement).href || ''
-        options.data = options.data || {}
-
-        if (node instanceof HTMLAnchorElement) {
-            node.href = options.url
-        }
-
-        return options
-    }
-
-    function navigate(event) {
-        event.preventDefault()
-        axios(options)
-    }
-
-    options = mergeOptions(options)
-
-    node.addEventListener('click', navigate)
-
-    return {
-        update(newOptions) {
-            options = mergeOptions(newOptions)
-        },
-        destroy() {
-            node.removeEventListener('click', navigate)
-        }
-    }
-}
