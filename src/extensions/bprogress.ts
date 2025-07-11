@@ -11,35 +11,38 @@ declare module '../index' {
 /**
  * Vortex BProgress extension
  */
-const bprogress = (config: Partial<BProgressOptions> = {}): VortexExtension => {
+const bprogress = (config: Partial<BProgressOptions> = {}): VortexExtension => ({ request, response }) => {
     BProgress.configure(config)
 
-    return ({ request, response }) => ({
-        name: "bprogress",
-        request: request.use(
-            function (request) {
-                if (typeof request.vortex === 'object' && request.vortex.progress === false) {
-                    return request
-                }
-                BProgress.start()
+    const req = request.use(
+        function (request) {
+            if (typeof request.vortex === 'object' && request.vortex.progress === false) {
                 return request
-            },
-            function (error) {
-                BProgress.done()
-                return Promise.reject(error)
             }
-        ),
-        response: response.use(
-            function (response) {
-                BProgress.done()
-                return response
-            },
-            function (error) {
-                BProgress.done()
-                return Promise.reject(error)
-            }
-        )
-    })
+            BProgress.start()
+            return request
+        },
+        function (error) {
+            BProgress.done()
+            return Promise.reject(error)
+        }
+    )
+
+    const res = response.use(
+        function (response) {
+            BProgress.done()
+            return response
+        },
+        function (error) {
+            BProgress.done()
+            return Promise.reject(error)
+        }
+    )
+
+    return () => {
+        request.eject(req)
+        response.eject(res)
+    }
 }
 
 export default bprogress

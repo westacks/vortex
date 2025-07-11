@@ -7,7 +7,7 @@
 - [ ] Prefetching
 - [ ] Load when visible
 - [x] Props merging
-- [ ] State remembering
+- [x] State remembering
 - [x] History encryption
 - [x] Server-side rendering
 - [ ] Simple frontend framework adapters

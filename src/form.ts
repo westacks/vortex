@@ -1,14 +1,16 @@
-import { signal, effect } from "./signals";
-import { axios, RouterRequestConfig } from "./router";
-import { isEqual } from "./helpers";
+import { Signal, signal } from "./signals";
+import { axios, RouterRequestConfig, RouterResponse } from "./router";
+import { isEqual, proxyUnwrap, proxyWrap } from "./helpers";
+import { useRemember } from "./remember";
 
-export type FData<T extends object> = T & Form<T>
+export type VortexForm<T extends object> = T & Form<T>
+type FormRemember<T extends object> = { data: T, errors: Record<string, string> }
 
-export class Form<TForm extends object> {
+class Form<TForm extends object> {
     _defaults: TForm;
     _transform: unknown = undefined;
     _recentlySuccessfulTimeout: NodeJS.Timeout | null = null;
-    readonly _handler: ProxyHandler<FData<TForm>>
+    readonly _handler: ProxyHandler<VortexForm<TForm>>
 
     public wasSuccessful: boolean = false;
     public recentlySuccessful: boolean = false;
@@ -23,7 +25,13 @@ export class Form<TForm extends object> {
         return !isEqual(this.data(), this._defaults);
     }
 
-    constructor (initial: TForm, handler: ProxyHandler<FData<TForm>>) {
+    constructor (initial: TForm, handler: ProxyHandler<VortexForm<TForm>>) {
+        const intersects = Object.keys(initial).filter(key => key in this)
+
+        if (intersects.length > 0) {
+            throw new Error(`Form data intersects with reserved properties: ${intersects.join(', ')}`);
+        }
+
         this._defaults = initial
         this._handler = handler
 
@@ -39,7 +47,7 @@ export class Form<TForm extends object> {
         const keys = Object.keys(this._defaults);
 
         return keys.reduce((acc, key) => {
-            acc[key] = unwrap(this[key]);
+            acc[key] = proxyUnwrap(this[key]);
             return acc;
         }, {} as TForm);
     }
@@ -60,13 +68,13 @@ export class Form<TForm extends object> {
                 }, {})
             : this._defaults
 
-        Object.assign(this, wrap(data, this._handler));
+        Object.assign(this, proxyWrap(data, this._handler));
 
         return this;
     }
 
     fill(data: TForm) {
-        Object.assign(this, wrap(data, this._handler));
+        Object.assign(this, proxyWrap(data, this._handler));
 
         return this;
     }
@@ -77,7 +85,7 @@ export class Form<TForm extends object> {
         }
 
         if (!field) {
-            field = unwrap(Object.keys(this._defaults).reduce((obj, key) => {
+            field = proxyUnwrap(Object.keys(this._defaults).reduce((obj, key) => {
                 obj[key] = this[key];
                 return obj
             }, {}))
@@ -126,7 +134,7 @@ export class Form<TForm extends object> {
                 return Promise.reject(error);
             })
             .then(response => {
-                this.errors = response?.data?.props?.errors ?? {};
+                this.errors = useForm.resolveErrors(response);
                 if (Object.keys(this.errors).length === 0) {
                     this.wasSuccessful = true;
                     this.recentlySuccessful = true;
@@ -164,28 +172,40 @@ export class Form<TForm extends object> {
     }
 }
 
-export function useForm<T extends object>(
+export const useForm = function <T extends object>(
     data: T | (() => T),
     rememberKey?: string,
-) {
+): Signal<VortexForm<T>> {
     data = typeof data === 'function' ? data() : data
 
-    const [get, set] = signal<FData<T>>(undefined, isEqual)
-    const subscribe = (fn: (form: FData<T>) => void) => effect(() => fn(get()))
+    const { get, set, subscribe } = signal<VortexForm<T>>(undefined, isEqual)
 
-    set(createProxy(data, set) as FData<T>);
+    const remember = rememberKey ? useRemember({ data, errors: {} }, rememberKey).get() : undefined
+
+    set(createProxy(data, set, remember) as VortexForm<T>);
+
+    if (remember) {
+        subscribe((form) => Object.assign(remember, { data: form.data(), errors: form.errors }))
+    }
 
     return { get, set, subscribe }
 }
 
-function createProxy<T extends object>(data: T, set: (form: FData<T>, changed?: boolean) => void) {
-    const handler : ProxyHandler<FData<T>> = {
+useForm.resolveErrors = (_response: RouterResponse): Record<string, string> => ({})
+
+function createProxy<T extends object>(data: T, set: (form: VortexForm<T>, changed?: boolean) => void, remember: FormRemember<T> | undefined) {
+    const handler : ProxyHandler<VortexForm<T>> = {
         set(target, key: string, value, receiver) {
             const changed = target[key] !== value
             const result = Reflect.set(target, key, value, receiver);
 
             if (result && !key.startsWith('_')) {
-                set(proxy as FData<T>, changed);
+                set(proxy as VortexForm<T>, changed);
+
+                if (remember) {
+                    remember.data = proxy.data()
+                    remember.errors = proxy.errors
+                }
             }
 
             return result
@@ -195,41 +215,14 @@ function createProxy<T extends object>(data: T, set: (form: FData<T>, changed?: 
     const form = new Form(data, handler)
     const proxy = new Proxy(form, handler)
 
+    if (remember) {
+        const { data, errors } = proxyUnwrap(remember)
+
+        proxy.fill(data)
+        proxy.errors = errors
+    }
+
     return proxy
-}
-
-function wrap<T extends object>(data: T, handler: ProxyHandler<FData<T>>) {
-    if (typeof data !== 'object' || data === null || data instanceof File || data instanceof Blob) {
-        return data
-    }
-
-    if (Array.isArray(data)) {
-        return data.map(item => wrap(item, handler));
-    }
-
-    return Object.entries(data).reduce(
-        (acc, [key, value]) => {
-            acc[key] = typeof value !== 'object' || value === null ? value : new Proxy(wrap(value, handler), handler);
-
-            return acc
-        },
-        {} as T)
-}
-
-
-function unwrap<T extends object>(data: T): T {
-    if (typeof data !== 'object' || data === null || data instanceof File || data instanceof Blob) {
-        return data
-    }
-
-    if (Array.isArray(data)) {
-        return data.map(unwrap) as unknown as T;
-    }
-
-    return Object.keys(data).reduce((acc, key) => {
-        acc[key] = unwrap(data[key]);
-        return acc
-    }, {} as T)
 }
 
 function containsFile<T extends object>(obj: T): boolean {

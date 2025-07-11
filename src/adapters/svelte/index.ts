@@ -1,14 +1,22 @@
-import { getPage, subscribe, useForm as useVortexForm } from '../../index'
-import { readable } from 'svelte/store'
+import { getPage, subscribe, useForm as useVortexForm, useRemember as useVortexRemember } from '../../index'
+import { readable, Writable } from 'svelte/store'
+import { Signal } from '../../signals'
 export { link as inertia } from '../../index'
 
 export const page = readable(getPage(), subscribe)
 
 export function useForm<T extends object>(data: T | (() => T), rememberKey?: string) {
-    const { get, subscribe } = useVortexForm(data, rememberKey)
+    return convertSignalToWritable(useVortexForm(data, rememberKey))
+}
 
-    const store = readable(get(), subscribe)
-    // @ts-expect-error Prevent svelte's writable calls
+export function useRemember<T extends object>(data: T, key: string = 'default') {
+    return convertSignalToWritable(useVortexRemember(data, key))
+}
+
+function convertSignalToWritable<T>(
+    { get, subscribe }: Signal<T>
+): Writable<T> {
+    const store = readable(get(), subscribe) as Writable<T>
     store.set = () => {}
 
     return store

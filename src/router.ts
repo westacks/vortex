@@ -53,10 +53,7 @@ export interface RouterResponse<T = any, D = any> extends AxiosResponse<T, D> {
     config: InternalRouterRequestConfig<D>
 }
 
-export type VortexExtension = (interceptors: {
-    request: AxiosInterceptorManager<InternalRouterRequestConfig<any>>,
-    response: AxiosInterceptorManager<RouterResponse<any, any>>,
-}) => { request?: number, response?: number, name?: string, destroy?: () => void } | void
+export type VortexExtension = (interceptors: Router["interceptors"]) => () => void | (() => void)
 
 export let axios: Router
 
@@ -70,23 +67,17 @@ export function install(...extensions: VortexExtension[]): () => void {
     if (!axios) throw new Error("Router not initialized!");
 
     const uninstall = extensions.reduce((acc, x) => {
-        const extension = x(axios.interceptors)
+        const uninstall = x(axios.interceptors)
 
-        if (extension?.name && typeof window !== "undefined") {
-            window.dispatchEvent(new CustomEvent(`vortex:extension-installed`, { detail: extension.name }))
+        if (typeof uninstall === "function") {
+            acc.push(uninstall)
         }
 
-        acc.request = [...acc.request, ...(extension?.request ? [extension.request] : [])]
-        acc.response = [...acc.response, ...(extension?.response ? [extension.response] : [])]
-        acc.destroy = [...acc.destroy, ...(extension?.destroy ? [extension.destroy] : [])]
-
         return acc
-    }, { request: [] as number[], response: [] as number[], destroy: [] as (() => void)[] })
+    }, [] as (() => void)[])
 
     return () => {
-        uninstall.request.forEach(x => axios?.interceptors.request.eject(x))
-        uninstall.response.forEach(x => axios?.interceptors.response.eject(x))
-        uninstall.destroy.forEach(x => x())
+        uninstall.forEach(fn => fn())
     }
 }
 

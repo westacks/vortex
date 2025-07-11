@@ -1,8 +1,14 @@
-export type Signal<T> = [SignalGetter<T>, SignalSetter<T>]
+export type Signal<T> = {
+    get: SignalGetter<T>,
+    set: SignalSetter<T>,
+    subscribe: SignalSubscriber<T>
+}
+
 export type SignalGetter<T> = () => T
 export type SignalSetter<T> = (value: T | ((value: T) => T), force?: boolean) => void
+export type SignalSubscriber<T> = (fn: (value: T) => void) => void
 
-export type Effect = () => EffectDestructor | Promise<EffectDestructor>
+type Effect = () => EffectDestructor | Promise<EffectDestructor>
 type EffectDestructor = void | (() => void)
 type EffectLink = (instance: EffectInstance) => void
 type EffectInstance = { notify: () => void, link: (unlink: EffectLink) => void}
@@ -45,7 +51,9 @@ export function signal<T>(value: T|undefined = undefined, equals: (a: T, b: T) =
         };
     }
 
-    return [get, set];
+    const subscribe = (fn: (remember: T) => void) => effect(() => fn(get()))
+
+    return { get, set, subscribe }
 }
 
 /**
@@ -54,7 +62,7 @@ export function signal<T>(value: T|undefined = undefined, equals: (a: T, b: T) =
  * @param fn Effect callback
  * @returns Destructor function
  */
-export function effect(fn: Effect): () => void {
+function effect(fn: Effect): () => void {
     let cleaner: EffectDestructor
     const subscribers = new Set<EffectLink>
     const instance: EffectInstance = { notify, link }
