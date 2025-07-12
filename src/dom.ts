@@ -1,7 +1,13 @@
 import { axios, type RouterRequestConfig, type VortexConfig } from "./router"
 
-export function link(node: HTMLElement, options: RouterRequestConfig = {}) {
-    function mergeOptions(options) {
+type PrefetchMethod = 'click' | 'mount' | 'hover'
+type PrefetchLinkConfig = {
+    prefetch?: boolean | PrefetchMethod | PrefetchMethod[]
+    cacheFor?: number | string | (number | string)[]
+}
+
+export function link(node: HTMLElement, options: RouterRequestConfig & PrefetchLinkConfig = {}) {
+    function mergeOptions(options: RouterRequestConfig & PrefetchLinkConfig): { options: RouterRequestConfig } & PrefetchLinkConfig {
         options.method = options.method || 'get'
         options.url = options.url || (node as HTMLAnchorElement).href || ''
         options.data = options.data || {}
@@ -10,7 +16,24 @@ export function link(node: HTMLElement, options: RouterRequestConfig = {}) {
             node.href = options.url
         }
 
-        return options
+        let prefetch, cacheFor
+
+        if (options.prefetch) {
+            if (Array.isArray(options.prefetch)) {
+                prefetch = options.prefetch
+            } else if (options.prefetch === true) {
+                prefetch = ['hover']
+            } else {
+                prefetch = [options.prefetch]
+            }
+
+            cacheFor = options.cacheFor || "30s"
+        }
+
+        delete options.cacheFor
+        delete options.prefetch
+
+        return { options, prefetch, cacheFor }
     }
 
     function navigate(event) {
@@ -18,13 +41,47 @@ export function link(node: HTMLElement, options: RouterRequestConfig = {}) {
         axios.request(options)
     }
 
-    options = mergeOptions(options)
+    const prefetch = () => axios.request({ ...options, prefetch: config.cacheFor })
+
+    function hover() {
+        let loading = false
+
+        setTimeout(() => {
+            if (!loading && node.matches(':hover')) {
+                loading = true
+                prefetch().finally(() => loading = false)
+            }
+        }, 75)
+    }
+
+    function reinstallPrefetchEvents() {
+        node.removeEventListener('mouseover', hover)
+        node.removeEventListener('mousedown', prefetch)
+
+        const methods = (config.prefetch || []) as PrefetchMethod[]
+
+        if (methods.includes('hover')) {
+            node.addEventListener('mouseover', hover)
+        }
+
+        if (methods.includes('click')) {
+            node.addEventListener('mousedown', prefetch)
+        }
+
+        if (methods.includes('mount')) {
+            prefetch()
+        }
+    }
+
+    let config = mergeOptions(options)
+    reinstallPrefetchEvents()
 
     node.addEventListener('click', navigate)
 
     return {
         update(newOptions) {
-            options = mergeOptions(newOptions)
+            config = mergeOptions(newOptions)
+            reinstallPrefetchEvents()
         },
         destroy() {
             node.removeEventListener('click', navigate)

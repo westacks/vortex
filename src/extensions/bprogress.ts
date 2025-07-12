@@ -16,7 +16,7 @@ const bprogress = (config: Partial<BProgressOptions> = {}): VortexExtension => (
 
     const req = request.use(
         function (request) {
-            if (typeof request.vortex === 'object' && request.vortex.progress === false) {
+            if (typeof request.vortex === 'object' && request.vortex.progress === false || request.prefetch) {
                 return request
             }
             BProgress.start()

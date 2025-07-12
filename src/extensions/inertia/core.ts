@@ -33,7 +33,7 @@ export function resolveRequest(request: InternalRouterRequestConfig): InternalRo
 }
 
 export function resolveResponse(response: RouterResponse): RouterResponse {
-    if (!response.config.vortex || !response.headers['x-inertia']) {
+    if (response.config.prefetch || !response.config.vortex || !response.headers['x-inertia']) {
         return response
     }
 

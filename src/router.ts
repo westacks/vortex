@@ -1,6 +1,7 @@
 import type { AxiosRequestConfig, AxiosResponse, AxiosInstance, AxiosInterceptorManager, HeadersDefaults, AxiosHeaderValue, InternalAxiosRequestConfig } from "axios";
 import { getPage } from "./page";
 import http from "axios";
+import { prefetch } from "./prefetch";
 
 export interface Router extends AxiosInstance {
     new(config?: RouterRequestConfig);
@@ -20,7 +21,7 @@ export interface Router extends AxiosInstance {
     postForm<T = any, R = RouterResponse<T>, D = any>(url: string, data?: D, config?: RouterRequestConfig<D>): Promise<R>;
     putForm<T = any, R = RouterResponse<T>, D = any>(url: string, data?: D, config?: RouterRequestConfig<D>): Promise<R>;
     patchForm<T = any, R = RouterResponse<T>, D = any>(url: string, data?: D, config?: RouterRequestConfig<D>): Promise<R>;
-    reload<T = any, R = AxiosResponse<T>, D = any>(config?: RouterRequestConfig<D>): Promise<R>
+    reload<T = any, R = AxiosResponse<T>, D = any>(config?: RouterRequestConfig<D>): Promise<R>;
 
     <T = any, R = RouterResponse<T>, D = any>(config: RouterRequestConfig<D>): Promise<R>;
     <T = any, R = RouterResponse<T>, D = any>(url: string, config?: RouterRequestConfig<D>): Promise<R>;
@@ -40,13 +41,17 @@ export interface VortexConfig {
     [key: string]: unknown
 }
 
+export type PrefetchConfig = number | string | (string | number)[] | boolean
+
 export interface RouterRequestConfig<D = any> extends AxiosRequestConfig<D> {
     vortex?: VortexConfig | boolean;
+    prefetch?: PrefetchConfig;
     [key: string]: unknown;
 }
 
 export interface InternalRouterRequestConfig<D = any> extends InternalAxiosRequestConfig<D> {
     vortex?: VortexConfig | boolean;
+    prefetch?: PrefetchConfig;
 }
 
 export interface RouterResponse<T = any, D = any> extends AxiosResponse<T, D> {
@@ -84,9 +89,9 @@ export function install(...extensions: VortexExtension[]): () => void {
 export function createRouter() {
     axios = http.create() as Router
 
-    axios.reload = function (config) {
-        return this({ url: getPage()?.url, ...config })
-    }
+    install(prefetch)
+
+    axios.reload = (config) => axios.request({ url: getPage()?.url, ...config })
 
     axios.defaults.withCredentials = true
     axios.defaults.vortex = true

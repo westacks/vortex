@@ -4,7 +4,7 @@
 - [x] `useForm` helper
 - [x] Partial reloads
 - [x] Deferred props
-- [ ] Prefetching
+- [x] Prefetching
 - [x] Load when visible
 - [x] Props merging
 - [x] State remembering
