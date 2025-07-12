@@ -8,7 +8,7 @@ export type PrefetchedResponse = {
     timestamp: number
 }
 
-export const prefetch: VortexExtension = ({ request, response }) => {
+export const prefetch: VortexExtension = ({ request }) => {
     const cache = new Map<string, PrefetchedResponse>()
     const req = request.use(async (config) => {
         const key = await hash(config)
@@ -87,7 +87,6 @@ async function hash(config: InternalRouterRequestConfig): Promise<string> {
     const data = JSON.stringify({
         url: url.origin + url.pathname + url.search,
         method: (config.method || 'get').toLowerCase(),
-        data: config.data ?? "{}"
     })
     const buffer = await crypto.subtle.digest('sha-1', new TextEncoder().encode(data))
     return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('')

@@ -10,4 +10,5 @@
 - [x] State remembering
 - [x] History encryption
 - [x] Server-side rendering
+- [x] Polling
 - [ ] Simple frontend framework adapters
