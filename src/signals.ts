@@ -6,7 +6,7 @@ export type Signal<T> = {
 
 export type SignalGetter<T> = () => T
 export type SignalSetter<T> = (value: T | ((value: T) => T), force?: boolean) => void
-export type SignalSubscriber<T> = (fn: (value: T) => void) => void
+export type SignalSubscriber<T> = (fn: (value: T) => void) => () => void
 
 type Effect = () => EffectDestructor | Promise<EffectDestructor>
 type EffectDestructor = void | (() => void)

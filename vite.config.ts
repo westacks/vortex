@@ -24,11 +24,12 @@ export default defineConfig({
                 "extensions/inertia": resolve(__dirname, 'src/extensions/inertia/index.ts'),
                 "extensions/bprogress": resolve(__dirname, 'src/extensions/bprogress.ts'),
                 // Adapters
-                "adapters/svelte": resolve(__dirname, 'src/adapters/svelte/index.ts'),
+                "adapters/svelte": resolve(__dirname, 'src/adapters/svelte.ts'),
+                "adapters/vue": resolve(__dirname, 'src/adapters/vue.ts'),
             },
         },
         rollupOptions: {
-            external: [...builtinModules, /^node:/, 'axios', /^\@bprogress\/core/, 'svelte'],
+            external: [...builtinModules, /^node:/, 'axios', /^\@bprogress\/core/, 'svelte', 'vue'],
         }
     },
 })

@@ -1,12 +1,20 @@
 import { axios, type RouterRequestConfig, type VortexConfig } from "./router"
 
+export type Action<E extends HTMLElement, T> = (
+    node: E,
+    parameters: T
+) => {
+    update?: (parameters: T) => void
+    destroy?: () => void
+}
+
 type PrefetchMethod = 'click' | 'mount' | 'hover'
 type PrefetchLinkConfig = {
     prefetch?: boolean | PrefetchMethod | PrefetchMethod[]
     cacheFor?: number | string | (number | string)[]
 }
 
-export function link(node: HTMLElement, options: RouterRequestConfig & PrefetchLinkConfig = {}) {
+export const link: Action<HTMLElement, RouterRequestConfig & PrefetchLinkConfig> = (node, options = {})  => {
     function mergeOptions(options: RouterRequestConfig & PrefetchLinkConfig): { options: RouterRequestConfig } & PrefetchLinkConfig {
         options.method = options.method || 'get'
         options.url = options.url || (node as HTMLAnchorElement).href || ''
@@ -95,7 +103,7 @@ type VisibleConfig = {
     always?: boolean,
 }
 
-export function visible(node: HTMLElement, rawOptions: VisibleConfig | VortexConfig) {
+export const visible: Action<HTMLElement, VisibleConfig | VortexConfig> = (node, rawOptions) => {
     function mergeOptions(options: VisibleConfig | VortexConfig): VisibleConfig {
         return !options.vortex
             ? { buffer: 0, always: false, vortex: options  }
@@ -129,7 +137,7 @@ export function visible(node: HTMLElement, rawOptions: VisibleConfig | VortexCon
     observer.observe(node)
 
     return {
-        update(newOptions: VisibleConfig | VortexConfig) {
+        update(newOptions) {
             options = mergeOptions(newOptions)
         },
         destroy() {

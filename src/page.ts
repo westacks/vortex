@@ -9,4 +9,3 @@ export interface Page {
 }
 
 export const { get: getPage, set: setPage, subscribe } = signal<Page>(undefined, isEqual)
-

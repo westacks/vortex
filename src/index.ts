@@ -1,6 +1,6 @@
 export * from "./client";
-export * from "./dom";
 export * from "./page";
+export { link, visible } from "./dom";
 export { usePoll } from "./polling";
 export { useForm } from "./form";
 export { useRemember } from "./remember";
