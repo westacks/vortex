@@ -4,7 +4,6 @@ import { type Action } from '../dom';
 import { createEffect, createSignal, onCleanup } from "solid-js";
 import { createMutable, modifyMutable, reconcile } from "solid-js/store";
 
-
 type ExtractAccessorReturn<F> = F extends (
   node: any,
   accessor: () => infer R

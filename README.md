@@ -16,5 +16,5 @@
 - [x] Svelte adapter
 - [x] Vue adapter
 - [x] SolidJS adapter
-- [ ] React adapter
+- [x] React adapter
 - [ ] Angular adapter
