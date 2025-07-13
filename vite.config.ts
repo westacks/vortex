@@ -28,10 +28,11 @@ export default defineConfig({
                 "adapters/vue": resolve(__dirname, 'src/adapters/vue.ts'),
                 "adapters/solid-js": resolve(__dirname, 'src/adapters/solid-js.ts'),
                 "adapters/react": resolve(__dirname, 'src/adapters/react.ts'),
+                "adapters/preact": resolve(__dirname, 'src/adapters/preact.ts'),
             },
         },
         rollupOptions: {
-            external: [...builtinModules, /^node:/, 'axios', /^\@bprogress\/core/, /^svelte/, 'vue', /^solid\-js/, /^react/],
+            external: [...builtinModules, /^node:/, 'axios', /^\@bprogress\/core/, /^svelte/, 'vue', /^solid\-js/, /^react/, /^preact/],
         }
     },
 })
