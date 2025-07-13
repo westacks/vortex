@@ -29,9 +29,6 @@ export async function createVortex(setup: (el: HTMLElement, page: Page, hydrate:
 
     const dispose = await setup(element, page, !!element.dataset?.ssr);
 
-    delete element.dataset.page
-    delete element.dataset.ssr
-
     return () => {
         if (dispose instanceof Function) {
             dispose();

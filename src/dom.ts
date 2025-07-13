@@ -14,7 +14,11 @@ type PrefetchLinkConfig = {
     cacheFor?: number | string | (number | string)[]
 }
 
-export const link: Action<HTMLElement, RouterRequestConfig & PrefetchLinkConfig> = (node, options = {})  => {
+export const link: Action<HTMLElement, RouterRequestConfig & PrefetchLinkConfig | boolean> = (node, options = true)  => {
+    if (options === true) {
+        options = {}
+    }
+
     function mergeOptions(options: RouterRequestConfig & PrefetchLinkConfig): { options: RouterRequestConfig } & PrefetchLinkConfig {
         options.method = options.method || 'get'
         options.url = options.url || (node as HTMLAnchorElement).href || ''
@@ -46,7 +50,7 @@ export const link: Action<HTMLElement, RouterRequestConfig & PrefetchLinkConfig>
 
     function navigate(event) {
         event.preventDefault()
-        axios.request(options)
+        axios.request(options as RouterRequestConfig & PrefetchLinkConfig)
     }
 
     const prefetch = () => axios.request({ ...options, prefetch: config.cacheFor })
@@ -81,14 +85,18 @@ export const link: Action<HTMLElement, RouterRequestConfig & PrefetchLinkConfig>
         }
     }
 
-    let config = mergeOptions(options)
+    let config = mergeOptions(options as RouterRequestConfig & PrefetchLinkConfig)
     reinstallPrefetchEvents()
 
     node.addEventListener('click', navigate)
 
     return {
         update(newOptions) {
-            config = mergeOptions(newOptions)
+            if (newOptions === true) {
+                newOptions = {}
+            }
+
+            config = mergeOptions(newOptions as RouterRequestConfig & PrefetchLinkConfig)
             reinstallPrefetchEvents()
         },
         destroy() {
@@ -98,16 +106,16 @@ export const link: Action<HTMLElement, RouterRequestConfig & PrefetchLinkConfig>
 }
 
 type VisibleConfig = {
-    vortex: VortexConfig,
+    vortex: VortexConfig | boolean,
     buffer?: number,
     always?: boolean,
 }
 
-export const visible: Action<HTMLElement, VisibleConfig | VortexConfig> = (node, rawOptions) => {
-    function mergeOptions(options: VisibleConfig | VortexConfig): VisibleConfig {
-        return !options.vortex
-            ? { buffer: 0, always: false, vortex: options  }
-            : { buffer: 0, always: false, ...options as VisibleConfig }
+export const visible: Action<HTMLElement, VisibleConfig | VortexConfig | boolean> = (node, rawOptions = true) => {
+    function mergeOptions(options: VisibleConfig | VortexConfig | boolean): VisibleConfig {
+        return options === true || !(options as VortexConfig).vortex
+            ? { buffer: 0, always: true, vortex: options  }
+            : { buffer: 0, always: true, ...options as VisibleConfig }
     }
 
     let options: VisibleConfig = mergeOptions(rawOptions)

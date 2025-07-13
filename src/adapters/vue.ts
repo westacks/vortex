@@ -1,16 +1,23 @@
-import { getPage, Page, subscribe, useForm as useVortexForm, useRemember as useVortexRemember } from '../index'
+import { getPage, Page, subscribe, useForm as useVortexForm, useRemember as useVortexRemember, link as vortexLink, visible as vortexVisible } from '../index'
 import { reactive, onBeforeUnmount, Reactive, Directive, Plugin  } from 'vue'
-import { Signal } from '../signals'
-import { link as vortexLink, visible as vortexVisible, Action } from '../dom'
+import { type Signal } from '../signals'
+import { type Action } from '../dom'
 
 const link = convertActionToDirective(vortexLink)
 const visible = convertActionToDirective(vortexVisible)
+
+declare module '@vue/runtime-core' {
+    export interface GlobalDirectives {
+        link: typeof link
+        visible: typeof visible
+    }
+}
 
 export const vortex: Plugin = {
     install: (app) => app.directive('link', link).directive('visible', visible)
 }
 
-export function usePage() {
+export function usePage(): Page {
     return convertSignalToReactive({ get: getPage, subscribe } as Signal<Page>)
 }
 

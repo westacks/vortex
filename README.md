@@ -9,6 +9,11 @@
 - [x] Props merging
 - [x] State remembering
 - [x] History encryption
-- [x] Server-side rendering
 - [x] Polling
-- [ ] Simple frontend framework adapters
+- [x] Server-side rendering
+- [ ] Precache (PWA)
+- [x] Svelte adapter
+- [x] Vue adapter
+- [x] SolidJS adapter
+- [ ] React adapter
+- [ ] Angular adapter

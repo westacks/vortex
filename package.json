@@ -44,7 +44,8 @@
   "peerDependencies": {
     "@bprogress/core": "^1.0.0",
     "svelte": "^3.0.0 || ^4.0.0 || ^5.0.0",
-    "vue": "^3.0.0"
+    "vue": "^3.0.0",
+    "solid-js": "^1.0.0"
   },
   "files": [
     "dist"
@@ -65,9 +66,9 @@
       "require": "./dist/server.cjs"
     },
     "./inertia": {
-      "types": "./dist/extensions/inertia.d.ts",
-      "import": "./dist/extensions/inertia.js",
-      "require": "./dist/extensions/inertia.cjs"
+      "types": "./dist/extensions/inertia/index.d.ts",
+      "import": "./dist/extensions/inertia/index.js",
+      "require": "./dist/extensions/inertia/index.cjs"
     },
     "./bprogress": {
       "types": "./dist/extensions/bprogress.d.ts",
@@ -83,6 +84,11 @@
       "types": "./dist/adapters/vue.d.ts",
       "import": "./dist/adapters/vue.js",
       "require": "./dist/adapters/vue.cjs"
+    },
+    "./solid-js": {
+      "types": "./dist/adapters/solid-js.d.ts",
+      "import": "./dist/adapters/solid-js.js",
+      "require": "./dist/adapters/solid-js.cjs"
     }
   }
 }
