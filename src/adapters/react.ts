@@ -1,24 +1,33 @@
-import { getPage, subscribe, useForm as useVortexForm, useRemember as useVortexRemember, Page, link, visible } from '../index';
+import { getPage, useForm as useVortexForm, useRemember as useVortexRemember, link, visible } from '../index';
 import { Signal } from "../signals"
 import { Action } from '../dom';
-import { useCallback, useEffect, useRef, useSyncExternalStore } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
-export const usePage = () => convertSignalToStore({ get: getPage, subscribe } as Signal<Page>)
+export const usePage = getPage
 
 export const useLink = convertActionToDirective(link)
 
 export const useVisible = convertActionToDirective(visible)
 
 export function useForm<T extends object>(data: T | (() => T), rememberKey?: string) {
-    return convertSignalToStore(useVortexForm(data, rememberKey))
+    return convertSignalToState(useVortexForm(data, rememberKey))
 }
 
 export function useRemember<T extends object>(data: T, key: string = 'default') {
-    return convertSignalToStore(useVortexRemember(data, key))
+    return convertSignalToState(useVortexRemember(data, key))
 }
 
-function convertSignalToStore<T>({ get, subscribe }: Signal<T>) {
-    return useSyncExternalStore((notify) => subscribe((_value) => notify()), get)
+function convertSignalToState<T>({ get, subscribe }: Signal<T>) {
+    const ref = useRef<T>(undefined);
+    const [,forceUpdate] = useState({});
+
+    if (ref.current === undefined) {
+        ref.current = get();
+    }
+
+    useEffect(() => subscribe((_v) => forceUpdate({})), []);
+
+    return ref.current
 }
 
 function convertActionToDirective<E extends HTMLElement, T>(action: Action<E, T>) {
