@@ -43,12 +43,13 @@
     "vue": "^3.5.17"
   },
   "peerDependencies": {
-    "@bprogress/core": "^1.0.0",
-    "svelte": "^3.0.0 || ^4.0.0 || ^5.0.0",
-    "vue": "^3.0.0",
-    "solid-js": "^1.0.0",
-    "react": "^19.0.0",
-    "preact": "^10.11.0"
+    "@angular/core": ">=16.0.0",
+    "@bprogress/core": ">=1.0.0",
+    "svelte": ">=3.0.0",
+    "vue": ">=3.0.0",
+    "solid-js": ">=1.0.0",
+    "react": ">=16.8.0",
+    "preact": ">=10.11.0"
   },
   "files": [
     "dist"
@@ -102,6 +103,11 @@
       "types": "./dist/adapters/preact.d.ts",
       "import": "./dist/adapters/preact.js",
       "require": "./dist/adapters/preact.cjs"
+    },
+    "./angular": {
+      "types": "./dist/adapters/angular.d.ts",
+      "import": "./dist/adapters/angular.js",
+      "require": "./dist/adapters/angular.cjs"
     }
   }
 }

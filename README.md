@@ -18,4 +18,4 @@
 - [x] SolidJS adapter
 - [x] React adapter
 - [x] Preact adapter
-- [ ] Angular adapter
+- [x] Angular adapter
