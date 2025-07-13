@@ -1,6 +1,7 @@
 # Vortex
 
 ## WIP
+- [x] InertiaJS compatibility layer
 - [x] `useForm` helper
 - [x] Partial reloads
 - [x] Deferred props
@@ -11,7 +12,7 @@
 - [x] History encryption
 - [x] Polling
 - [x] Server-side rendering
-- [ ] Precache (PWA)
+- [?] Precache (PWA)
 - [x] Svelte adapter
 - [x] Vue adapter
 - [x] SolidJS adapter
