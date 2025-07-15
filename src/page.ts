@@ -8,4 +8,4 @@ export interface Page {
     [key: string]: unknown
 }
 
-export const { get: getPage, set: setPage, subscribe } = signal<Page>(undefined, isEqual)
+export const page = signal<Page>(undefined, isEqual)

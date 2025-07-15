@@ -1,9 +1,9 @@
-import { getPage, subscribe, useForm as useVortexForm, useRemember as useVortexRemember } from '../index'
+import { page as vortexPage, useForm as useVortexForm, useRemember as useVortexRemember } from '../index'
 import { readable, type Writable } from 'svelte/store'
 import { type Signal } from '../signals'
 export { link, visible } from '../index'
 
-export const page = readable(getPage(), subscribe)
+export const page = readable(vortexPage.get(), vortexPage.subscribe)
 
 export function useForm<T extends object>(data: T | (() => T), rememberKey?: string) {
     return convertSignalToWritable(useVortexForm(data, rememberKey))

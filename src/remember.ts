@@ -6,12 +6,12 @@ export const cache: Map<string, any> = new Map
 export function useRemember<T extends object>(data: T, key: string = 'default'): Signal<T> {
     data = key ? (cache.get(key) || data) : data
 
-    const { get, set, subscribe } = signal<T>(undefined, isEqual)
+    const store = signal<T>(undefined, isEqual)
 
-    subscribe((remember) => cache.set(key, proxyUnwrap(remember)))
-    set(createProxy(data, set) as T);
+    store.subscribe((remember) => cache.set(key, proxyUnwrap(remember)))
+    store.set(createProxy(data, store.set) as T);
 
-    return { get, set, subscribe }
+    return store
 }
 
 function createProxy<T extends object>(data: T, set: SignalSetter<T>) {

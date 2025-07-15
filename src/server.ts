@@ -1,6 +1,6 @@
 import { createServer, IncomingMessage } from 'node:http'
 import { argv, stdout, exit } from 'node:process'
-import { getPage, setPage, type Page } from './page'
+import { page, type Page } from './page'
 
 /**
  * Initializes a Vortex server renderer
@@ -21,11 +21,11 @@ const read = (message: IncomingMessage): Promise<string> => new Promise((resolve
 
 async function createCli<T>(renderer: (page: Page) => (T | Promise<T>)) {
     try {
-        const page = JSON.parse(argv[2] ?? 'null')
+        const data = JSON.parse(argv[2] ?? 'null')
 
-        if (page) setPage(page)
+        if (data) page.set(data)
 
-        stdout.write(JSON.stringify(await renderer(getPage())) + '\n')
+        stdout.write(JSON.stringify(await renderer(page.get())) + '\n')
     } catch (error) {
         const res = new Error('Unable to parse page data', {cause: error})
         console.error(res)
@@ -40,10 +40,10 @@ async function createSrv<T>(renderer: (page: Page) => (T | Promise<T>), port: nu
         '/down': () => exit(),
         '/render': async (request) => {
             const timer = performance.now()
-            const page = JSON.parse(await read(request) ?? 'null')
-            setPage(page)
-            const result = await renderer(getPage())
-            console.log(`[VORTEX] Rendered page '${page?.url}' in ${performance.now() - timer} ms`)
+            const data = JSON.parse(await read(request) ?? 'null')
+            page.set(data)
+            const result = await renderer(page.get())
+            console.log(`[VORTEX] Rendered page '${data?.url}' in ${performance.now() - timer} ms`)
             return result
         },
         '*' : () => ({status: 'NOT_FOUND', timestamp: Date.now()}),

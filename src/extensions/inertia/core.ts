@@ -1,6 +1,6 @@
 import { AxiosError } from "axios";
 import { RouterResponse, type InternalRouterRequestConfig } from "../../router";
-import { getPage, setPage, type Page, type VortexConfig, axios } from "../..";
+import { page, type Page, type VortexConfig, axios } from "../..";
 import { pushState } from "./state";
 import { clear } from "./encryption";
 
@@ -9,13 +9,13 @@ export function resolveRequest(request: InternalRouterRequestConfig): InternalRo
         return request
     }
 
-    const page = getPage()
+    const pageState = page.get()
     const config = (typeof request.vortex === "object" ? request.vortex : {}) as VortexConfig
 
     request.headers['accept'] = 'text/html, application/xhtml+xml, application/json'
     request.headers['x-inertia'] = true
-    request.headers['x-inertia-version'] = page?.version
-    request.headers['x-inertia-partial-component'] = page?.component
+    request.headers['x-inertia-version'] = pageState?.version
+    request.headers['x-inertia-partial-component'] = pageState?.component
 
     if (Array.isArray(config.only) && config.only.length > 0) {
         request.headers['x-inertia-partial-data'] = config.only.join(",")
@@ -37,7 +37,7 @@ export function resolveResponse(response: RouterResponse): RouterResponse {
         return response
     }
 
-    const page = getPage()
+    const pageState = page.get()
     const config = (typeof response.config.vortex === "object" ? response.config.vortex : {}) as VortexConfig
 
     if (Array.isArray(config.only) && config.only.length > 0) {
@@ -47,30 +47,30 @@ export function resolveResponse(response: RouterResponse): RouterResponse {
             replace[prop] = response.data.props[prop]
         }
 
-        response.data.props = { ...page.props, ...replace }
+        response.data.props = { ...pageState.props, ...replace }
     }
 
     if (Array.isArray(config.except) && config.except.length > 0) {
         const replace = {}
 
         for (const prop of config.except) {
-            replace[prop] = page.props[prop]
+            replace[prop] = pageState.props[prop]
         }
 
         response.data.props = { ...response.data.props, ...replace }
     }
 
-    response.data = pageMutations(response.data, page)
+    response.data = pageMutations(response.data, pageState)
 
     if (config?.preserveHistory) {
-        response.data.url = page?.url || response.data.url
+        response.data.url = pageState?.url || response.data.url
     } else {
-        pushState(response.data, config?.replaceHistory || (page?.url === response.data.url && config?.replaceHistory !== false))
+        pushState(response.data, config?.replaceHistory || (pageState?.url === response.data.url && config?.replaceHistory !== false))
     }
 
-    setPage(response.data)
+    page.set(response.data)
 
-    if (page.clearHistory) {
+    if (pageState.clearHistory) {
         clear()
     }
 

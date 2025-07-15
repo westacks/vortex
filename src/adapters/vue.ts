@@ -1,4 +1,4 @@
-import { getPage, Page, subscribe, useForm as useVortexForm, useRemember as useVortexRemember, link as vortexLink, visible as vortexVisible } from '../index'
+import { page, useForm as useVortexForm, useRemember as useVortexRemember, link as vortexLink, visible as vortexVisible } from '../index'
 import { reactive, onBeforeUnmount, Reactive, Directive, Plugin  } from 'vue'
 import { type Signal } from '../signals'
 import { type Action } from '../dom'
@@ -17,9 +17,7 @@ export const vortex: Plugin = {
     install: (app) => app.directive('link', link).directive('visible', visible)
 }
 
-export function usePage(): Page {
-    return convertSignalToReactive({ get: getPage, subscribe } as Signal<Page>)
-}
+export const usePage = () => convertSignalToReactive(page)
 
 export function useForm<T extends object>(data: T | (() => T), rememberKey?: string) {
     return convertSignalToReactive(useVortexForm(data, rememberKey))

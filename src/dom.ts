@@ -2,7 +2,7 @@ import { axios, type RouterRequestConfig, type VortexConfig } from "./router"
 
 export type Action<E extends HTMLElement, T> = (
     node: E,
-    parameters: T
+    parameters?: T
 ) => {
     update?: (parameters: T) => void
     destroy?: () => void

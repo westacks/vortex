@@ -1,9 +1,9 @@
-import { getPage, subscribe, useForm as useVortexForm, useRemember as useVortexRemember, link, visible, Page } from '../index';
+import { page, useForm as useVortexForm, useRemember as useVortexRemember, link, visible } from '../index';
 import { Signal } from "../signals"
 import { Action } from '../dom';
 import { useCallback, useEffect, useRef, useState } from "react"
 
-export const usePage = () => convertSignalToState({ get: getPage, subscribe } as Signal<Page>)
+export const usePage = () => convertSignalToState(page)
 
 export const useLink = convertActionToDirective(link)
 

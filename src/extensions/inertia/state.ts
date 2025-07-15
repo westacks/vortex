@@ -1,4 +1,4 @@
-import { axios, getPage, setPage, type Page } from "../../index";
+import { axios, page, type Page } from "../../index";
 import { encrypt, decrypt } from "./encryption";
 import { cache } from "../../remember";
 
@@ -11,11 +11,11 @@ const makeState = (page: Page, remember: Record<string, unknown> = {}) => page.e
     : Promise.resolve({page, remember})
 
 export async function pushState(data: Page, replace: boolean = false) {
-    const page = replace ? data : getPage()
+    const pageState = replace ? data : page.get()
 
     if (cache.size > 0) {
         const remember = Object.fromEntries(cache)
-        history.replaceState(await makeState(page, remember), "", window.location.href)
+        history.replaceState(await makeState(pageState, remember), "", window.location.href)
 
         if (replace) {
             return
@@ -49,5 +49,5 @@ export async function popState(event: PopStateEvent) {
     }
 
     Object.entries(state.remember).forEach(([key, value]) => cache.set(key, value))
-    setPage(state.page)
+    page.set(state.page)
 }

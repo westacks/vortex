@@ -4,4 +4,4 @@ export { link, visible } from "./dom";
 export { usePoll } from "./polling";
 export { useForm } from "./form";
 export { useRemember } from "./remember";
-export { axios, install, type VortexExtension, type VortexConfig } from "./router";
+export { axios, type VortexExtension, type VortexConfig } from "./router";

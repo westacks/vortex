@@ -1,4 +1,4 @@
-import { getPage, subscribe, useForm as useVortexForm, useRemember as useVortexRemember, Page, link as vortexLink, visible as vortexVisible } from '../index';
+import { page, useForm as useVortexForm, useRemember as useVortexRemember, link as vortexLink, visible as vortexVisible } from '../index';
 import { type Signal } from "../signals";
 import { type Action } from '../dom';
 import { createEffect, createSignal, onCleanup } from "solid-js";
@@ -9,7 +9,7 @@ type ExtractAccessorReturn<F> = F extends (
   accessor: () => infer R
 ) => any ? R : never;
 
-export const [usePage] = convertSignal({ get: getPage, subscribe } as Signal<Page>)
+export const [usePage] = convertSignal(page)
 
 export const link = convertActionToDirective(vortexLink)
 

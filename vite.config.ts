@@ -15,7 +15,6 @@ export default defineConfig({
         }),
     ],
     build: {
-        minify: false,
         lib: {
             name: 'vortex',
             entry: {

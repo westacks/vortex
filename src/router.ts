@@ -1,5 +1,5 @@
 import type { AxiosRequestConfig, AxiosResponse, AxiosInstance, AxiosInterceptorManager, HeadersDefaults, AxiosHeaderValue, InternalAxiosRequestConfig } from "axios";
-import { getPage } from "./page";
+import { page } from "./page";
 import http from "axios";
 import { prefetch } from "./prefetch";
 
@@ -91,7 +91,7 @@ export function createRouter() {
 
     install(prefetch)
 
-    axios.reload = (config) => axios.request({ url: getPage()?.url, ...config })
+    axios.reload = (config) => axios.request({ url: page.get()?.url, ...config })
 
     axios.defaults.withCredentials = true
     axios.defaults.vortex = true
