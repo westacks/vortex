@@ -43,7 +43,6 @@
     "vue": "^3.5.17"
   },
   "peerDependencies": {
-    "@angular/core": ">=16.0.0",
     "@bprogress/core": ">=1.0.0",
     "svelte": ">=3.0.0",
     "vue": ">=3.0.0",
@@ -97,11 +96,6 @@
       "types": "./dist/adapters/react.d.ts",
       "import": "./dist/adapters/react.js",
       "require": "./dist/adapters/react.cjs"
-    },
-    "./angular": {
-      "types": "./dist/adapters/angular.d.ts",
-      "import": "./dist/adapters/angular.js",
-      "require": "./dist/adapters/angular.cjs"
     }
   }
 }

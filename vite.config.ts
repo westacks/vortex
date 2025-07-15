@@ -29,7 +29,6 @@ export default defineConfig({
                 "adapters/vue": resolve(__dirname, 'src/adapters/vue.ts'),
                 "adapters/solid-js": resolve(__dirname, 'src/adapters/solid-js.ts'),
                 "adapters/react": resolve(__dirname, 'src/adapters/react.ts'),
-                'adapters/angular': resolve(__dirname, 'src/adapters/angular.ts'),
             },
         },
         rollupOptions: {
@@ -42,7 +41,6 @@ export default defineConfig({
                 'vue',
                 /^solid\-js/,
                 /^react/,
-                /^\@angular\/core/
             ],
         }
     },
