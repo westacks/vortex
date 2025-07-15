@@ -48,8 +48,7 @@
     "svelte": ">=3.0.0",
     "vue": ">=3.0.0",
     "solid-js": ">=1.0.0",
-    "react": ">=16.8.0",
-    "preact": ">=10.11.0"
+    "react": ">=16.8.0"
   },
   "files": [
     "dist"
@@ -98,11 +97,6 @@
       "types": "./dist/adapters/react.d.ts",
       "import": "./dist/adapters/react.js",
       "require": "./dist/adapters/react.cjs"
-    },
-    "./preact": {
-      "types": "./dist/adapters/preact.d.ts",
-      "import": "./dist/adapters/preact.js",
-      "require": "./dist/adapters/preact.cjs"
     },
     "./angular": {
       "types": "./dist/adapters/angular.d.ts",

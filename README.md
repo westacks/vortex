@@ -17,5 +17,4 @@
 - [x] Vue adapter
 - [x] SolidJS adapter
 - [x] React adapter
-- [x] Preact adapter
 - [x] Angular adapter

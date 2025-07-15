@@ -15,6 +15,7 @@ export default defineConfig({
         }),
     ],
     build: {
+        minify: false,
         lib: {
             name: 'vortex',
             entry: {
@@ -28,7 +29,6 @@ export default defineConfig({
                 "adapters/vue": resolve(__dirname, 'src/adapters/vue.ts'),
                 "adapters/solid-js": resolve(__dirname, 'src/adapters/solid-js.ts'),
                 "adapters/react": resolve(__dirname, 'src/adapters/react.ts'),
-                "adapters/preact": resolve(__dirname, 'src/adapters/preact.ts'),
                 'adapters/angular': resolve(__dirname, 'src/adapters/angular.ts'),
             },
         },
@@ -42,7 +42,6 @@ export default defineConfig({
                 'vue',
                 /^solid\-js/,
                 /^react/,
-                /^preact/,
                 /^\@angular\/core/
             ],
         }
