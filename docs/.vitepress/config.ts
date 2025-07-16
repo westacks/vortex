@@ -17,16 +17,18 @@ export default defineConfig({
             { text: 'Introduction', link: '/introduction', },
             {
                 text: 'Installation',
+                link: '/installation',
                 items: [
-                    { text: 'Server', link: '/installation/server' },
-                    { text: 'Client', link: '/installation/client' },
+                    { text: 'React', link: '/installation/react' },
+                    { text: 'Vue', link: '/installation/vue' },
+                    { text: 'Svelte', link: '/installation/svelte' },
+                    { text: 'SolidJS', link: '/installation/solid-js' },
                 ]
             },
             {
                 text: 'Usage',
                 items: [
                     { text: 'Navigation', link: '/usage/navigation' },
-                    { text: 'Extensions API', link: '/usage/extensions' },
                 ]
             }
         ],

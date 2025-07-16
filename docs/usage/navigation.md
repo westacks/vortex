@@ -1,7 +1,7 @@
 # Navigation
 
 ## Basic Usage
-To navigate between pages, Vortex uses underlying [Axios](https://axios-http.com/) instance, which is bound to the current window [history](https://developer.mozilla.org/en-US/docs/Web/API/History_API).
+To navigate between pages, use Vortex's underlying [Axios](https://axios-http.com/) instance.
 
 To navigate to a specific page, all you have to do, is make a request using `axios`:
 

@@ -1,85 +1,46 @@
-# Markdown Extension Examples
+# Welcome to Vortex
 
-This page demonstrates some of the built-in markdown extensions provided by VitePress.
+Vortex is a framework-agnostic binding layer designed to simplify building reactive, modern web applications with server-driven routing. Highly inspired by [Inertia.js](https://inertiajs.com/), but build with a philosophy that you should own all your code. It provides a flexible core with adapters for popular frontend frameworks, enabling seamless integration with your favorite tools.
 
-## Syntax Highlighting
+Whether you're building with React, Vue, Svelte, SolidJS or other frameworks, Vortex offers:
 
-VitePress provides Syntax Highlighting powered by [Shiki](https://github.com/shikijs/shiki), with additional features like line-highlighting:
+- Declarative and reactive state management
+- Powerful routing and navigation handling
+- Easy integration with backend-driven frontends like [Inertia.js](https://inertiajs.com/)
+- Extensible plugin system for enhanced functionality
 
-**Input**
+This documentation will guide you through getting started, key concepts, and advanced usage patterns to help you make the most out of Vortex.
 
-````md
-```js{4}
-export default {
-  data () {
-    return {
-      msg: 'Highlighted!'
-    }
-  }
-}
-```
-````
+## Getting Started
 
-**Output**
+This guide will help you quickly set up a new Vortex project and get your first reactive app running.
 
-```js{4}
-export default {
-  data () {
-    return {
-      msg: 'Highlighted!'
-    }
-  }
-}
+### Installation
+
+Install Vortex using npm or package manager of your choice:
+
+```bash
+npm install @westacks/vortex
 ```
 
-## Custom Containers
+### Basic Usage
 
-**Input**
+Now you are ready to create your first Vortex app:
 
-```md
-::: info
-This is an info box.
-:::
+```ts
+// app.js
+import { createVortex } from '@westacks/vortex';
 
-::: tip
-This is a tip.
-:::
+createVortex(async (target, page, install, ssr) => {
+  // Install Vortex extensions and mount the app
+})
 
-::: warning
-This is a warning.
-:::
-
-::: danger
-This is a dangerous warning.
-:::
-
-::: details
-This is a details block.
-:::
 ```
 
-**Output**
 
-::: info
-This is an info box.
-:::
+## Core Features
 
-::: tip
-This is a tip.
-:::
-
-::: warning
-This is a warning.
-:::
-
-::: danger
-This is a dangerous warning.
-:::
-
-::: details
-This is a details block.
-:::
-
-## More
-
-Check out the documentation for the [full list of markdown extensions](https://vitepress.dev/guide/markdown).
+- **Reactive State**: Signal based approach allows easy integration with any frontend framework
+- **Routing**: Built-in routing integrations and navigation helpers
+- **Plugins**: Extend Vortex with official and custom plugins
+- **Multi-framework Support**: Adapters available for React, Vue, Svelte, and SolidJS
