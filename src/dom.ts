@@ -111,14 +111,14 @@ type VisibleConfig = {
     always?: boolean,
 }
 
-export const visible: Action<HTMLElement, VisibleConfig | VortexConfig | boolean> = (node, rawOptions = true) => {
+export const visible: Action<HTMLElement, (VisibleConfig & RouterRequestConfig) | VortexConfig | boolean> = (node, rawOptions = true) => {
     function mergeOptions(options: VisibleConfig | VortexConfig | boolean): VisibleConfig {
         return options === true || !(options as VortexConfig).vortex
             ? { buffer: 0, always: true, vortex: options  }
             : { buffer: 0, always: true, ...options as VisibleConfig }
     }
 
-    let options: VisibleConfig = mergeOptions(rawOptions)
+    let options: VisibleConfig & RouterRequestConfig = mergeOptions(rawOptions)
 
     const observer = new IntersectionObserver(entries => {
         if (!entries[0].isIntersecting) {
@@ -135,7 +135,7 @@ export const visible: Action<HTMLElement, VisibleConfig | VortexConfig | boolean
 
         node.dataset.fetching = ''
 
-        axios.reload({ vortex: options.vortex })
+        axios.reload(options)
             .then(() => node.dataset.loaded = '')
             .finally(() => delete node.dataset.fetching)
     }, {
