@@ -1,12 +1,15 @@
-import { axios, type RouterRequestConfig, type VortexConfig } from "./router"
+import { axios, RouterResponse, type RouterRequestConfig, type VortexConfig } from "./router"
+import { useForm, VortexForm } from "./form"
+import { formDataToObject, isEqual } from "./helpers"
+import { Signal, signal } from "./signals"
 
-export type Action<E extends HTMLElement, T> = (
+export type Action<E extends HTMLElement, T, R = {}> = (
     node: E,
     parameters?: T
 ) => {
     update?: (parameters: T) => void
     destroy?: () => void
-}
+} & R
 
 type PrefetchMethod = 'click' | 'mount' | 'hover'
 type PrefetchLinkConfig = {
@@ -150,6 +153,53 @@ export const visible: Action<HTMLElement, (VisibleConfig & RouterRequestConfig) 
         },
         destroy() {
             observer.disconnect()
+        }
+    }
+}
+
+interface FormOptions extends RouterRequestConfig {
+    before?: (form: VortexForm<any>) => VortexForm<any>
+    after?: (result: Promise<RouterResponse<any>>) => any
+}
+
+export const form: Action<HTMLFormElement,FormOptions,{ errors: Signal<Record<string, string>> }> = (node, rawOptions = {}) => {
+    let options: FormOptions = {
+        before: (form) => form,
+        after: (result) => result,
+        ...rawOptions
+    }
+    const form = useForm(formDataToObject(new FormData(node)))
+    const errors = signal(form.get().errors, isEqual)
+
+    const unsubscribe = form.subscribe((form) => errors.set(form.errors))
+
+    function submit(event: SubmitEvent) {
+        event.preventDefault()
+
+        const { before, after } = options
+
+        // @ts-expect-error
+        return after(before(form.get()).request({
+            method: node.method || 'post',
+            url: node.action || (window.location.origin + window.location.pathname),
+            ...options
+        }))
+    }
+
+    node.addEventListener('submit', submit)
+
+    return {
+        errors,
+        update(newOptions) {
+            options = {
+                before: (form) => form,
+                after: (result) => result,
+                ...newOptions
+            }
+        },
+        destroy() {
+            node.removeEventListener('submit', submit)
+            unsubscribe()
         }
     }
 }
