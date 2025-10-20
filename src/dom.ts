@@ -3,7 +3,7 @@ import { useForm, VortexForm } from "./form"
 import { formDataToObject, isEqual } from "./helpers"
 import { Signal, signal } from "./signals"
 
-export type Action<E extends HTMLElement, T, R = {}> = (
+export type Action<E extends HTMLElement, T, R = object> = (
     node: E,
     parameters?: T
 ) => {
@@ -164,8 +164,8 @@ interface FormOptions extends RouterRequestConfig {
 
 export const form: Action<HTMLFormElement,FormOptions,{ errors: Signal<Record<string, string>> }> = (node, rawOptions = {}) => {
     let options: FormOptions = {
-        before: (form) => form,
-        after: (result) => result,
+        before: (form: VortexForm<any>) => form,
+        after: (result: Promise<RouterResponse<any>>) => result,
         ...rawOptions
     }
     const form = useForm(formDataToObject(new FormData(node)))
@@ -176,14 +176,15 @@ export const form: Action<HTMLFormElement,FormOptions,{ errors: Signal<Record<st
     function submit(event: SubmitEvent) {
         event.preventDefault()
 
-        const { before, after } = options
+        const _form = options.before ? options.before(form.get()) : form.get()
 
-        // @ts-expect-error
-        return after(before(form.get()).request({
+        const response = _form.request({
             method: node.method || 'post',
             url: node.action || (window.location.origin + window.location.pathname),
             ...options
-        }))
+        })
+
+        return options.after ? options.after(response) : response
     }
 
     node.addEventListener('submit', submit)

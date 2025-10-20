@@ -77,7 +77,7 @@ export function formDataToObject(formData: FormData): Record<string, unknown> {
         let bracketMode = false;
         let escapeNext = false;
 
-        for (let char of fullKey) {
+        for (const char of fullKey) {
             if (escapeNext) {
                 buffer += char;
                 escapeNext = false;
